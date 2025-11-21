@@ -1,0 +1,22 @@
+name: resume-architect-agent
+channels:
+  - conda-forge
+  - defaults
+dependencies:
+  - python=3.12
+  - pip>=24.0
+  - pip:
+      # FastAPI and server
+      - fastapi[standard]>=0.115.0
+      - uvicorn[standard]>=0.30.0
+      # LangChain and LangGraph
+      - langchain>=1.0.0
+      - langgraph>=1.0.0
+      - langchain-openai>=1.0.0
+      # PostgreSQL support for LangGraph checkpointing
+      - langgraph-checkpoint-postgres>=1.0.0
+      - psycopg2-binary>=2.9.0
+      # Environment variables and settings
+      - python-dotenv>=1.0.0
+      - pydantic-settings>=2.0.0
+
