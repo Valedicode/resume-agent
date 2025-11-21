@@ -97,7 +97,7 @@ tbc.
 ### Prerequisites
 
 - [Conda](https://docs.conda.io/en/latest/miniconda.html) or [Miniconda](https://docs.conda.io/en/latest/miniconda.html) installed
-- Python 3.11+ (managed by conda)
+- Python 3.12 (recommended) or 3.11+ (managed by conda)
 
 ### Setup
 
