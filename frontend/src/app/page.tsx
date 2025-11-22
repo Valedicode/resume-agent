@@ -14,11 +14,6 @@ export default function Home() {
               Resume AI Agent
             </h1>
           </div>
-          
-          {/* Placeholder for dark mode toggle */}
-          <div className="flex items-center gap-4">
-            <div className="h-9 w-9 rounded-lg border border-slate-200 bg-slate-50"></div>
-          </div>
         </div>
       </header>
 
@@ -71,6 +66,71 @@ export default function Home() {
               </ol>
             </div>
           </aside>
+
+          {/* Main Chat Area */}
+          <div className="flex flex-1 flex-col gap-4">
+            <div className="flex flex-1 flex-col rounded-xl border border-slate-200 bg-white shadow-sm">
+              {/* Chat Messages Area */}
+              <div className="flex-1 overflow-y-auto p-6">
+                <div className="mx-auto max-w-3xl">
+                  {/* Welcome Message */}
+                  <div className="mb-6 text-center">
+                    <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-gradient-to-br from-indigo-600 to-blue-600">
+                      <svg className="h-8 w-8 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                      </svg>
+                    </div>
+                    <h2 className="mb-2 text-2xl font-bold text-slate-900">
+                      Welcome to Resume AI Agent
+                    </h2>
+                    <p className="text-slate-600">
+                      Upload your resume and share a job description to get started. 
+                      I'll help optimize your resume to match the position perfectly.
+                    </p>
+                  </div>
+
+                  {/* Placeholder for chat messages */}
+                  <div className="space-y-4">
+                    {/* This will be populated with chat messages */}
+                  </div>
+                </div>
+              </div>
+
+              {/* Input Area */}
+              <div className="border-t border-slate-200 bg-slate-50/50 p-4">
+                <div className="mx-auto max-w-3xl">
+                  <div className="flex items-end gap-3">
+                    {/* Text Input Placeholder */}
+                    <div className="flex-1">
+                      <div className="rounded-lg border border-slate-300 bg-white p-3 shadow-sm">
+                        <div className="mb-2 flex items-center gap-2">
+                          <svg className="h-4 w-4 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
+                          </svg>
+                          <span className="text-sm text-slate-500">
+                            Paste job description or URL here
+                          </span>
+                        </div>
+                        <div className="h-20 text-sm text-slate-400">
+                          Type your message...
+                        </div>
+                      </div>
+                    </div>
+                    
+                    {/* Send Button Placeholder */}
+                    <button className="flex h-12 w-12 items-center justify-center rounded-lg bg-gradient-to-br from-indigo-600 to-blue-600 text-white shadow-md transition-all hover:shadow-lg">
+                      <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
+                      </svg>
+                    </button>
+                  </div>
+                  <p className="mt-2 text-xs text-slate-500">
+                    Powered by AI. Your data is processed securely and privately.
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
       </main>
     </div>
