@@ -188,20 +188,22 @@ What would you like to work on today?`;
     <div className="flex min-h-screen flex-col bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50 dark:from-slate-950 dark:via-slate-900 dark:to-slate-950">
       {/* Header */}
       <header className="sticky top-0 z-50 w-full border-b border-slate-200/80 bg-white/80 backdrop-blur-md dark:border-slate-700/80 dark:bg-slate-900/80">
-        <div className="container mx-auto flex h-16 items-center justify-between px-6">
-          <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-gradient-to-br from-indigo-600 to-blue-600 dark:from-indigo-500 dark:to-blue-500">
-              <svg className="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-              </svg>
+        <div className="relative flex h-16 w-full items-center">
+          <div className="container mx-auto flex h-16 items-center justify-between px-6">
+            <div className="flex items-center gap-3">
+              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-gradient-to-br from-indigo-600 to-blue-600 dark:from-indigo-500 dark:to-blue-500">
+                <svg className="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                </svg>
+              </div>
+              <h1 className="text-xl font-semibold tracking-tight text-slate-900 dark:text-slate-100">
+                Resume AI Agent
+              </h1>
             </div>
-            <h1 className="text-xl font-semibold tracking-tight text-slate-900 dark:text-slate-100">
-              Resume AI Agent
-          </h1>
           </div>
           
-          {/* Dark Mode Toggle */}
-          <div className="flex items-center gap-4">
+          {/* Dark Mode Toggle - Positioned at absolute top-right */}
+          <div className="absolute right-6 flex items-center gap-4">
             <button
               onClick={toggleTheme}
               className="group relative h-9 w-9 rounded-lg border border-slate-200 bg-slate-50 transition-all hover:bg-slate-100 dark:border-slate-700 dark:bg-slate-800 dark:hover:bg-slate-700"
@@ -404,140 +406,226 @@ What would you like to work on today?`;
 
           {/* Main Chat Area */}
           <div className="flex flex-1 flex-col gap-4">
-            <div className="flex flex-1 flex-col rounded-xl border border-slate-200 bg-white shadow-sm dark:border-slate-700 dark:bg-slate-800">
-              {/* Chat Messages Area */}
-              <div className="flex-1 overflow-y-auto p-6">
-                <div className="mx-auto max-w-3xl">
-                  {/* Welcome Message - Only show when no messages */}
-                  {messages.length === 0 && (
-                    <div className="mb-6 text-center">
-                      <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-gradient-to-br from-indigo-600 to-blue-600 dark:from-indigo-500 dark:to-blue-500">
-                        <svg className="h-8 w-8 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
-                        </svg>
-                      </div>
-                      <h2 className="mb-2 text-2xl font-bold text-slate-900 dark:text-slate-100">
-                        Welcome to Resume AI Agent
+            {messages.length === 0 ? (
+              /* Empty State - Improved Layout for Large Screens */
+              <div className="flex flex-1 flex-col rounded-xl border border-slate-200 bg-white shadow-sm dark:border-slate-700 dark:bg-slate-800">
+                <div className="flex flex-1 flex-col items-center justify-start pt-16 sm:pt-20 md:pt-24 lg:pt-32">
+                  <div className="mx-auto w-full max-w-3xl px-6">
+                    {/* Question */}
+                    <div className="mb-10 text-center">
+                      <h2 className="mb-3 text-3xl font-semibold text-slate-900 dark:text-slate-100 sm:text-4xl">
+                        What would you like to work on today?
                       </h2>
-                      <p className="text-slate-600 dark:text-slate-400">
-                        Upload your resume and share a job description to get started. 
-                        I'll help optimize your resume to match the position perfectly.
+                      <p className="text-sm text-slate-500 dark:text-slate-400 sm:text-base">
+                        Upload your resume and ask me anything to get started
                       </p>
                     </div>
-                  )}
-
-                  {/* Chat Messages */}
-                  <div className="space-y-4">
-                    {messages.map((message) => (
-                      <div
-                        key={message.id}
-                        className={`flex gap-4 ${
-                          message.role === 'user' ? 'justify-end' : 'justify-start'
-                        }`}
-                      >
-                        {message.role === 'assistant' && (
-                          <div className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-indigo-600 to-blue-600 dark:from-indigo-500 dark:to-blue-500">
-                            <svg className="h-5 w-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
-                            </svg>
-                          </div>
-                        )}
-                        <div
-                          className={`max-w-[80%] rounded-2xl px-4 py-3 ${
-                            message.role === 'user'
-                              ? 'bg-indigo-600 text-white dark:bg-indigo-500'
-                              : 'bg-slate-100 text-slate-900 dark:bg-slate-700 dark:text-slate-100'
-                          }`}
-                        >
-                          <p className="whitespace-pre-wrap text-sm leading-relaxed">{message.content}</p>
-                        </div>
-                        {message.role === 'user' && (
-                          <div className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full bg-slate-200 dark:bg-slate-700">
-                            <svg className="h-5 w-5 text-slate-600 dark:text-slate-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                            </svg>
-                          </div>
-                        )}
-                      </div>
-                    ))}
                     
-                    {/* Loading indicator */}
-                    {isLoading && (
-                      <div className="flex gap-4 justify-start">
-                        <div className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-indigo-600 to-blue-600 dark:from-indigo-500 dark:to-blue-500">
-                          <svg className="h-5 w-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                    {/* Large Input Field */}
+                    <div className="w-full">
+                      <div className="relative flex items-center rounded-2xl border border-slate-300 bg-slate-50 px-4 py-4 shadow-sm transition-all focus-within:border-indigo-500 focus-within:bg-white focus-within:shadow-md dark:border-slate-600 dark:bg-slate-700/50 dark:focus-within:border-indigo-500 dark:focus-within:bg-slate-700">
+                        {/* Plus Icon */}
+                        <button
+                          onClick={handleClickUpload}
+                          className="mr-3 flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-lg text-slate-400 transition-colors hover:bg-slate-200 hover:text-slate-600 dark:text-slate-500 dark:hover:bg-slate-600 dark:hover:text-slate-300"
+                          aria-label="Add attachment"
+                        >
+                          <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
                           </svg>
-                        </div>
-                        <div className="rounded-2xl bg-slate-100 px-4 py-3 dark:bg-slate-700">
-                          <div className="flex gap-1">
-                            <div className="h-2 w-2 animate-bounce rounded-full bg-slate-400 [animation-delay:-0.3s]"></div>
-                            <div className="h-2 w-2 animate-bounce rounded-full bg-slate-400 [animation-delay:-0.15s]"></div>
-                            <div className="h-2 w-2 animate-bounce rounded-full bg-slate-400"></div>
-                          </div>
-                        </div>
-                      </div>
-                    )}
-                    <div ref={messagesEndRef} />
-                  </div>
-                </div>
-              </div>
-
-              {/* Input Area */}
-              <div className="border-t border-slate-200 bg-slate-50/50 p-4 dark:border-slate-700 dark:bg-slate-900/50">
-                <div className="mx-auto max-w-3xl">
-                  <div className="flex items-end gap-3">
-                    {/* Text Input */}
-                    <div className="flex-1">
-                      <div className="rounded-lg border border-slate-300 bg-white p-3 shadow-sm dark:border-slate-600 dark:bg-slate-700">
-                        <div className="mb-2 flex items-center gap-2">
-                          <svg className="h-4 w-4 text-slate-400 dark:text-slate-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
-                          </svg>
-                          <span className="text-sm text-slate-500 dark:text-slate-400">
-                            Paste job description or URL here
-                          </span>
-                        </div>
+                        </button>
+                        
+                        {/* Text Input */}
                         <textarea
                           ref={textareaRef}
                           value={inputText}
                           onChange={(e) => setInputText(e.target.value)}
                           onKeyDown={handleKeyDown}
-                          placeholder="Type your message... (Press Enter to send, Shift+Enter for new line)"
-                          className="w-full resize-none border-0 bg-transparent text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-0 dark:text-slate-100 dark:placeholder-slate-500"
+                          placeholder="Ask any question"
+                          className="flex-1 resize-none border-0 bg-transparent text-base text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-0 dark:text-slate-100 dark:placeholder-slate-500"
                           rows={1}
-                          style={{ minHeight: '24px', maxHeight: '200px' }}
+                          style={{ minHeight: '32px', maxHeight: '200px' }}
                         />
+                        
+                        {/* Right Side Icons */}
+                        <div className="ml-3 flex items-center gap-2">
+                          {/* Microphone Icon */}
+                          <button
+                            className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-lg text-slate-400 transition-colors hover:bg-slate-200 hover:text-slate-600 dark:text-slate-500 dark:hover:bg-slate-600 dark:hover:text-slate-300"
+                            aria-label="Voice input"
+                          >
+                            <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z" />
+                            </svg>
+                          </button>
+                          
+                          {/* Audio Waveform Icon (Send Button) */}
+                          <button
+                            onClick={handleSendMessage}
+                            disabled={!inputText.trim() || isLoading}
+                            className={`flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full bg-indigo-600 text-white transition-all hover:bg-indigo-700 disabled:cursor-not-allowed disabled:opacity-50 dark:bg-indigo-500 dark:hover:bg-indigo-600 ${
+                              inputText.trim() && !isLoading ? 'hover:scale-105' : ''
+                            }`}
+                            aria-label="Send message"
+                          >
+                            {isLoading ? (
+                              <svg className="h-4 w-4 animate-spin" fill="none" viewBox="0 0 24 24">
+                                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                              </svg>
+                            ) : (
+                              <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
+                              </svg>
+                            )}
+                          </button>
+                        </div>
                       </div>
                     </div>
                     
-                    {/* Send Button */}
-                    <button
-                      onClick={handleSendMessage}
-                      disabled={!inputText.trim() || isLoading}
-                      className={`flex h-12 w-12 items-center justify-center rounded-lg bg-gradient-to-br from-indigo-600 to-blue-600 text-white shadow-md transition-all hover:shadow-lg disabled:cursor-not-allowed disabled:opacity-50 dark:from-indigo-500 dark:to-blue-500 ${
-                        inputText.trim() && !isLoading ? 'hover:scale-105' : ''
-                      }`}
-                      aria-label="Send message"
-                    >
-                      {isLoading ? (
-                        <svg className="h-5 w-5 animate-spin" fill="none" viewBox="0 0 24 24">
-                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                        </svg>
-                      ) : (
-                        <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
-                        </svg>
-                      )}
-                    </button>
+                    {/* Quick Suggestions - Only show on larger screens */}
+                    <div className="mt-8 hidden grid-cols-1 gap-3 sm:grid sm:grid-cols-2 lg:grid-cols-3">
+                      <button
+                        onClick={() => setInputText("How can I improve my resume?")}
+                        className="group rounded-lg border border-slate-200 bg-slate-50 px-4 py-3 text-left text-sm text-slate-700 transition-all hover:border-indigo-300 hover:bg-indigo-50 hover:text-indigo-700 dark:border-slate-700 dark:bg-slate-800/50 dark:text-slate-300 dark:hover:border-indigo-600 dark:hover:bg-indigo-950/30 dark:hover:text-indigo-400"
+                      >
+                        <span className="font-medium">💡</span> How can I improve my resume?
+                      </button>
+                      <button
+                        onClick={() => setInputText("Match my resume to a job description")}
+                        className="group rounded-lg border border-slate-200 bg-slate-50 px-4 py-3 text-left text-sm text-slate-700 transition-all hover:border-indigo-300 hover:bg-indigo-50 hover:text-indigo-700 dark:border-slate-700 dark:bg-slate-800/50 dark:text-slate-300 dark:hover:border-indigo-600 dark:hover:bg-indigo-950/30 dark:hover:text-indigo-400"
+                      >
+                        <span className="font-medium">🎯</span> Match my resume to a job
+                      </button>
+                      <button
+                        onClick={() => setInputText("What skills should I highlight?")}
+                        className="group rounded-lg border border-slate-200 bg-slate-50 px-4 py-3 text-left text-sm text-slate-700 transition-all hover:border-indigo-300 hover:bg-indigo-50 hover:text-indigo-700 dark:border-slate-700 dark:bg-slate-800/50 dark:text-slate-300 dark:hover:border-indigo-600 dark:hover:bg-indigo-950/30 dark:hover:text-indigo-400"
+                      >
+                        <span className="font-medium">⭐</span> What skills should I highlight?
+                      </button>
+                    </div>
                   </div>
-                  <p className="mt-2 text-xs text-slate-500 dark:text-slate-400">
-                    Powered by AI. Your data is processed securely and privately.
-                  </p>
                 </div>
               </div>
-            </div>
+            ) : (
+              /* Chat Layout - When messages exist */
+              <div className="flex flex-1 flex-col rounded-xl border border-slate-200 bg-white shadow-sm dark:border-slate-700 dark:bg-slate-800">
+                {/* Chat Messages Area */}
+                <div className="flex-1 overflow-y-auto p-6">
+                  <div className="mx-auto max-w-3xl">
+                    {/* Chat Messages */}
+                    <div className="space-y-4">
+                      {messages.map((message) => (
+                        <div
+                          key={message.id}
+                          className={`flex gap-4 ${
+                            message.role === 'user' ? 'justify-end' : 'justify-start'
+                          }`}
+                        >
+                          {message.role === 'assistant' && (
+                            <div className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-indigo-600 to-blue-600 dark:from-indigo-500 dark:to-blue-500">
+                              <svg className="h-5 w-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                              </svg>
+                            </div>
+                          )}
+                          <div
+                            className={`max-w-[80%] rounded-2xl px-4 py-3 ${
+                              message.role === 'user'
+                                ? 'bg-indigo-600 text-white dark:bg-indigo-500'
+                                : 'bg-slate-100 text-slate-900 dark:bg-slate-700 dark:text-slate-100'
+                            }`}
+                          >
+                            <p className="whitespace-pre-wrap text-sm leading-relaxed">{message.content}</p>
+                          </div>
+                          {message.role === 'user' && (
+                            <div className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full bg-slate-200 dark:bg-slate-700">
+                              <svg className="h-5 w-5 text-slate-600 dark:text-slate-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                              </svg>
+                            </div>
+                          )}
+                        </div>
+                      ))}
+                      
+                      {/* Loading indicator */}
+                      {isLoading && (
+                        <div className="flex gap-4 justify-start">
+                          <div className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-indigo-600 to-blue-600 dark:from-indigo-500 dark:to-blue-500">
+                            <svg className="h-5 w-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                            </svg>
+                          </div>
+                          <div className="rounded-2xl bg-slate-100 px-4 py-3 dark:bg-slate-700">
+                            <div className="flex gap-1">
+                              <div className="h-2 w-2 animate-bounce rounded-full bg-slate-400 [animation-delay:-0.3s]"></div>
+                              <div className="h-2 w-2 animate-bounce rounded-full bg-slate-400 [animation-delay:-0.15s]"></div>
+                              <div className="h-2 w-2 animate-bounce rounded-full bg-slate-400"></div>
+                            </div>
+                          </div>
+                        </div>
+                      )}
+                      <div ref={messagesEndRef} />
+                    </div>
+                  </div>
+                </div>
+
+                {/* Input Area */}
+                <div className="border-t border-slate-200 bg-slate-50/50 p-4 dark:border-slate-700 dark:bg-slate-900/50">
+                  <div className="mx-auto max-w-3xl">
+                    <div className="flex items-end gap-3">
+                      {/* Text Input */}
+                      <div className="flex-1">
+                        <div className="rounded-lg border border-slate-300 bg-white p-3 shadow-sm dark:border-slate-600 dark:bg-slate-700">
+                          <div className="mb-2 flex items-center gap-2">
+                            <svg className="h-4 w-4 text-slate-400 dark:text-slate-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
+                            </svg>
+                            <span className="text-sm text-slate-500 dark:text-slate-400">
+                              Paste job description or URL here
+                            </span>
+                          </div>
+                          <textarea
+                            ref={textareaRef}
+                            value={inputText}
+                            onChange={(e) => setInputText(e.target.value)}
+                            onKeyDown={handleKeyDown}
+                            placeholder="Type your message... (Press Enter to send, Shift+Enter for new line)"
+                            className="w-full resize-none border-0 bg-transparent text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-0 dark:text-slate-100 dark:placeholder-slate-500"
+                            rows={1}
+                            style={{ minHeight: '24px', maxHeight: '200px' }}
+                          />
+                        </div>
+                      </div>
+                      
+                      {/* Send Button */}
+                      <button
+                        onClick={handleSendMessage}
+                        disabled={!inputText.trim() || isLoading}
+                        className={`flex h-12 w-12 items-center justify-center rounded-lg bg-gradient-to-br from-indigo-600 to-blue-600 text-white shadow-md transition-all hover:shadow-lg disabled:cursor-not-allowed disabled:opacity-50 dark:from-indigo-500 dark:to-blue-500 ${
+                          inputText.trim() && !isLoading ? 'hover:scale-105' : ''
+                        }`}
+                        aria-label="Send message"
+                      >
+                        {isLoading ? (
+                          <svg className="h-5 w-5 animate-spin" fill="none" viewBox="0 0 24 24">
+                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                          </svg>
+                        ) : (
+                          <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
+                          </svg>
+                        )}
+                      </button>
+                    </div>
+                    <p className="mt-2 text-xs text-slate-500 dark:text-slate-400">
+                      Powered by AI. Your data is processed securely and privately.
+                    </p>
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
         </div>
       </main>
