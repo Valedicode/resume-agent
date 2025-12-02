@@ -1,6 +1,6 @@
-## AIpply
+## JobWriterAI
 
-AIpply is a multi-agent system that takes your generic PDF resume and a specific Job Description URL, then uses a supervisor agent to coordinate specialized analysis agents and a writer agent: the analysis agents deeply understand your resume and the job description, and the writer agent uses that shared understanding to generate a refined, targeted resume and a matching cover letter.
+JobWriterAI is a multi-agent system that takes your generic PDF resume and a specific Job Description URL, then uses a supervisor agent to coordinate specialized analysis agents and a writer agent: the analysis agents deeply understand your resume and the job description, and the writer agent uses that shared understanding to generate a refined, targeted resume and a matching cover letter.
 
 ---
 
@@ -11,7 +11,7 @@ You provide:
 - **Generic resume** as a PDF file
 - **Job Description** as a URL (or pasted text, depending on the interface)
 
-AIpply’s core agents:
+JobWriterAI's core agents:
 
 - **Supervisor Agent**:
   - Orchestrates the full workflow
@@ -64,15 +64,15 @@ AIpply’s core agents:
 1. **Clone the repo**
 
 ```bash
-git clone https://github.com/Valedicode/aipply.git
-cd aipply
+git clone https://github.com/Valedicode/jobwriterai.git
+cd jobwriterai
 ```
 
 2. **Create and activate the conda environment**
 
 ```bash
 conda env create -f environment.yml
-conda activate aipply
+conda activate jobwriterai
 ```
 
 3. **Install backend Python dependencies**

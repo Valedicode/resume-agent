@@ -13,10 +13,10 @@ class Settings(BaseSettings):
     openai_api_key: str
 
     # Database
-    database_url: str = "postgresql://localhost:5432/aipply"
+    database_url: str = "postgresql://localhost:5432/jobwriterai"
 
     # Application
-    app_name: str = "AIpply"
+    app_name: str = "JobWriterAI"
     debug: bool = False
 
     # CORS

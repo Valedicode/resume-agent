@@ -1,4 +1,4 @@
-name: aipply
+name: jobwriterai
 channels:
   - conda-forge
   - defaults

@@ -6,7 +6,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 app = FastAPI(
-    title="AIpply API",
+    title="JobWriterAI API",
     description="AI-powered resume and cover-letter optimization with human-in-the-loop feedback",
     version="0.1.0",
 )
@@ -25,7 +25,7 @@ app.add_middleware(
 async def root():
     """Health check endpoint"""
     return {
-        "message": "AIpply API",
+        "message": "JobWriterAI API",
         "status": "running",
         "version": "0.1.0",
     }
