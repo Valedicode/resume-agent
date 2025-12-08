@@ -13,12 +13,12 @@ dotenv.load_dotenv()
 DEFAULT_TEST_CV = Path(__file__).parent.parent.parent / "data" / "CV.pdf"
 
 class ResumeInfo(BaseModel):
-    name: str
-    email: str
-    phone: str
-    skills: str
-    education: list[str]
-    experience: list[str]
+    name: str = Field(description="Full name of the applicant")
+    email: str = Field(description="Email address of the applicant")
+    phone: str = Field(description="Phone number of the applicant")
+    skills: list[str] = Field(description="List of professional skills")
+    education: list[str] = Field(description="Educational qualifications")
+    experience: list[str] = Field(description="Work experience entries")
 
 @tool
 def extract_resume_info(pdf_path: str) -> str:
@@ -38,7 +38,8 @@ def extract_resume_info(pdf_path: str) -> str:
     """
     # Extract text from PDF
     text = ""
-    doc = fitz.open(str(pdf_path))
+    path = Path(pdf_path)
+    doc = fitz.open(str(path))
     for page in doc:
         text += page.get_text("text") + "\n"
     
