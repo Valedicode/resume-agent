@@ -3,7 +3,6 @@ FastAPI application entry point
 """
 
 from fastapi import FastAPI
-from fastapi.middleware.cors import CORSMiddleware
 from contextlib import asynccontextmanager
 
 from app.api import cv_router, job_router, writer_router, supervisor_router
@@ -33,19 +32,22 @@ app = FastAPI(
     redoc_url="/redoc",
 )
 
-# Configure CORS
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=[
-        "http://localhost:3000",  # Next.js frontend
-        "http://localhost:5173",  # Vite frontend (if using)
-        "http://127.0.0.1:3000",
-        "http://127.0.0.1:5173",
-    ],
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
+# CORS is handled by the frontend's rewrite proxy
+# The Next.js development server (next.config.js) proxies API requests
+# to this backend, so all requests appear to come from the same origin.
+# This eliminates the need for CORS middleware in development and production.
+#
+# If you need to enable CORS for direct API access (e.g., testing with Postman),
+# uncomment the following:
+#
+# from fastapi.middleware.cors import CORSMiddleware
+# app.add_middleware(
+#     CORSMiddleware,
+#     allow_origins=["http://localhost:3000"],
+#     allow_credentials=True,
+#     allow_methods=["*"],
+#     allow_headers=["*"],
+# )
 
 # Register API routers
 app.include_router(cv_router)
