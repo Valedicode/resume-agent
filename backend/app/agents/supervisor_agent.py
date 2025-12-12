@@ -38,7 +38,8 @@ from .job_agent import (
     retrieve_text,
     collect_company_info
 )
-from .writer_agent import agent as writer_agent
+# Lazy import writer_agent to avoid WeasyPrint dependency issues on startup
+# writer_agent will be imported when needed in handoff_to_writer function
 
 import dotenv
 dotenv.load_dotenv()
@@ -466,6 +467,9 @@ Please analyze the alignment and help me create a tailored CV and cover letter."
     writer_messages = [{"role": "user", "content": initial_message}]
     
     try:
+        # Lazy import writer_agent to avoid WeasyPrint issues
+        from .writer_agent import agent as writer_agent
+        
         # Invoke Writer agent
         result = writer_agent.invoke({"messages": writer_messages})
         writer_response = result["messages"][-1].content
@@ -521,6 +525,9 @@ Just let me know what you need!"""
     
     # Continue with Writer agent
     try:
+        # Lazy import writer_agent to avoid WeasyPrint issues
+        from .writer_agent import agent as writer_agent
+        
         # Get conversation history with Writer
         writer_messages = [{"role": "user", "content": user_input}]
         
