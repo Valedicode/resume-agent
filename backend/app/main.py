@@ -2,8 +2,10 @@
 FastAPI application entry point
 """
 
-from fastapi import FastAPI
+from fastapi import FastAPI, HTTPException, status
+from fastapi.responses import FileResponse
 from contextlib import asynccontextmanager
+from pathlib import Path
 
 from app.api import cv_router, job_router, writer_router, supervisor_router
 from app.services.session_manager import get_session_manager
@@ -55,6 +57,10 @@ app.include_router(job_router)
 app.include_router(writer_router)
 app.include_router(supervisor_router)
 
+# Configure file serving directory
+DATA_DIR = Path(__file__).parent.parent / "data"
+DATA_DIR.mkdir(parents=True, exist_ok=True)
+
 
 @app.get("/")
 async def root():
@@ -96,6 +102,103 @@ async def health_check():
             "supervisor": "/api/supervisor"
         }
     }
+
+
+@app.get(
+    "/api/files/{filename}",
+    response_class=FileResponse,
+    summary="Download Generated File",
+    description="Download generated PDF files (CVs, cover letters) from the server."
+)
+async def download_file(filename: str):
+    """
+    Download a generated file.
+    
+    **Purpose:**
+    Serves generated PDF files (CVs, cover letters) to the frontend for download.
+    
+    **Security:**
+    - Validates filename to prevent directory traversal attacks
+    - Only serves files from the data directory
+    - Returns 404 if file doesn't exist
+    
+    **Parameters:**
+    - `filename`: Name of the file to download (e.g., "john_doe_cv.pdf")
+    
+    **Returns:**
+    - PDF file with appropriate content-type headers
+    
+    **Usage:**
+    ```javascript
+    // Frontend example
+    const response = await fetch(`/api/files/${filename}`);
+    const blob = await response.blob();
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = filename;
+    a.click();
+    ```
+    """
+    try:
+        # Security: Validate filename (prevent directory traversal)
+        if ".." in filename or "/" in filename or "\\" in filename:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Invalid filename. Filename cannot contain path separators or '..'."
+            )
+        
+        # Security: Only allow PDF files
+        if not filename.lower().endswith('.pdf'):
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Only PDF files can be downloaded."
+            )
+        
+        # Construct file path
+        file_path = DATA_DIR / filename
+        
+        # Check if file exists
+        if not file_path.exists():
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail=f"File not found: {filename}"
+            )
+        
+        # Security: Verify file is actually in DATA_DIR (resolve symlinks)
+        try:
+            resolved_path = file_path.resolve()
+            if not str(resolved_path).startswith(str(DATA_DIR.resolve())):
+                raise HTTPException(
+                    status_code=status.HTTP_403_FORBIDDEN,
+                    detail="Access denied."
+                )
+        except Exception:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Access denied."
+            )
+        
+        # Return file
+        return FileResponse(
+            path=str(file_path),
+            filename=filename,
+            media_type="application/pdf",
+            headers={
+                "Content-Disposition": f'attachment; filename="{filename}"',
+                "Cache-Control": "no-cache, no-store, must-revalidate",
+                "Pragma": "no-cache",
+                "Expires": "0"
+            }
+        )
+    
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Error serving file: {str(e)}"
+        )
 
 
 if __name__ == "__main__":
