@@ -129,7 +129,7 @@ def analyze_user_intent(state: SupervisorState) -> dict:
     Awaiting Clarification: {pending_questions is not None}
     """
     
-    llm = ChatOpenAI(model="gpt-5-nano", temperature=0)
+    llm = ChatOpenAI(model="gpt-4o-mini", temperature=0)
     structured_llm = llm.with_structured_output(UserIntent)
     
     prompt = ChatPromptTemplate.from_messages([
@@ -447,18 +447,24 @@ def handoff_to_writer(state: SupervisorState) -> dict:
     job_data = state.get("job_data", "")
     company_data = state.get("company_data", "")
     
+    # Convert data to strings for message construction
+    import json
+    cv_str = json.dumps(cv_data, indent=2) if isinstance(cv_data, dict) else str(cv_data)
+    job_str = json.dumps(job_data, indent=2) if isinstance(job_data, dict) else str(job_data)
+    company_str = json.dumps(company_data, indent=2) if isinstance(company_data, dict) else str(company_data)
+    
     # Prepare initial message for Writer agent
     company_context = ""
     if company_data:
-        company_context = f"\n\nCompany Information:\n{company_data}"
+        company_context = f"\n\nCompany Information:\n{company_str[:300]}... (truncated)"
     
     initial_message = f"""I have CV and job data ready for tailoring.
 
 CV Data:
-{cv_data[:300]}... (truncated)
+{cv_str[:300]}... (truncated)
 
 Job Data:
-{job_data[:300]}... (truncated)
+{job_str[:300]}... (truncated)
 {company_context}
 
 Please analyze the alignment and help me create a tailored CV and cover letter."""
@@ -474,6 +480,8 @@ Please analyze the alignment and help me create a tailored CV and cover letter."
         result = writer_agent.invoke({"messages": writer_messages})
         writer_response = result["messages"][-1].content
         
+        # Store the full writer conversation history for future turns
+        # The result["messages"] contains the complete conversation with the Writer agent
         return {
             "current_agent": "writer",
             "supervisor_response": writer_response,
@@ -481,7 +489,9 @@ Please analyze the alignment and help me create a tailored CV and cover letter."
             "messages": [
                 {"role": "system", "content": "Handed off to Writer Agent"},
                 {"role": "assistant", "content": writer_response}
-            ]
+            ],
+            # Store full writer conversation history for context in future turns
+            "writer_messages": result["messages"]
         }
         
     except Exception as e:
@@ -520,7 +530,9 @@ Just let me know what you need!"""
             "messages": [
                 {"role": "system", "content": "Returned from Writer Agent to Supervisor"},
                 {"role": "assistant", "content": response}
-            ]
+            ],
+            # Clear writer conversation history when returning to supervisor
+            "writer_messages": []
         }
     
     # Continue with Writer agent
@@ -528,11 +540,21 @@ Just let me know what you need!"""
         # Lazy import writer_agent to avoid WeasyPrint issues
         from .writer_agent import agent as writer_agent
         
-        # Get conversation history with Writer
-        writer_messages = [{"role": "user", "content": user_input}]
+        # Retrieve existing writer conversation history from state
+        # This should contain the full conversation history from previous turns
+        # If missing (edge case), start with empty list
+        writer_messages = state.get("writer_messages", [])
         
+        # Append the new user input to the conversation history
+        writer_messages.append({"role": "user", "content": user_input})
+        
+        # Invoke Writer agent with full conversation history
         result = writer_agent.invoke({"messages": writer_messages})
         writer_response = result["messages"][-1].content
+        
+        # Update stored writer conversation history with the complete result
+        # This includes all previous messages plus the new exchange
+        updated_writer_messages = result["messages"]
         
         # Check if Writer is done (simple check - could be more sophisticated)
         done_keywords = ["pdf generated successfully", "application complete", "all done"]
@@ -544,13 +566,17 @@ Just let me know what you need!"""
                 "supervisor_response": writer_response,
                 "next_action": "writer_active",
                 "session_stage": "complete",
-                "messages": [{"role": "assistant", "content": writer_response}]
+                "messages": [{"role": "assistant", "content": writer_response}],
+                # Maintain writer conversation history even after completion
+                "writer_messages": updated_writer_messages
             }
         
         return {
             "supervisor_response": writer_response,
             "next_action": "writer_active",
-            "messages": [{"role": "assistant", "content": writer_response}]
+            "messages": [{"role": "assistant", "content": writer_response}],
+            # Store updated writer conversation history for next turn
+            "writer_messages": updated_writer_messages
         }
         
     except Exception as e:
@@ -618,7 +644,7 @@ To get started, just share your CV file with me!"""
 
     else:  # general_question
         # Use LLM for general questions
-        llm = ChatOpenAI(model="gpt-5-nano", temperature=0.7)
+        llm = ChatOpenAI(model="gpt-4o-mini", temperature=0.7)
         
         prompt = ChatPromptTemplate.from_messages([
             ("system", """You are a friendly Job Application Assistant supervisor.
