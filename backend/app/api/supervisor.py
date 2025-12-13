@@ -254,6 +254,97 @@ async def get_session_state(
         )
 
 
+@router.post(
+    "/session/{session_id}/cv",
+    summary="Update Session with CV Data",
+    description="Add CV data to an existing supervisor session."
+)
+async def update_session_cv(
+    session_id: str,
+    cv_data: dict,
+    session_manager: SessionManager = Depends(get_session_manager)
+):
+    """
+    Update session with CV data after upload.
+    
+    This endpoint allows the frontend to add CV data to the supervisor session
+    after uploading and processing a CV file.
+    """
+    try:
+        session = session_manager.get_session(session_id)
+        if session is None:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Session not found or expired"
+            )
+        
+        # Update session with CV data
+        session_manager.update_session(session_id, {
+            "cv_data": cv_data,
+            "session_stage": "has_cv"
+        })
+        
+        return {
+            "success": True,
+            "message": "CV data added to session successfully"
+        }
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Error updating session: {str(e)}"
+        )
+
+
+@router.post(
+    "/session/{session_id}/job",
+    summary="Update Session with Job Data",
+    description="Add job data to an existing supervisor session."
+)
+async def update_session_job(
+    session_id: str,
+    job_data: dict,
+    session_manager: SessionManager = Depends(get_session_manager)
+):
+    """
+    Update session with job data after extraction.
+    
+    This endpoint allows the frontend to add job data to the supervisor session
+    after extracting job requirements from URL or text.
+    """
+    try:
+        session = session_manager.get_session(session_id)
+        if session is None:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Session not found or expired"
+            )
+        
+        # Update session with job data
+        has_cv = session.get("cv_data") is not None
+        new_stage = "ready_for_writer" if has_cv else "has_job"
+        
+        session_manager.update_session(session_id, {
+            "job_data": job_data,
+            "session_stage": new_stage,
+            "ready_for_writer": has_cv  # Ready if we have both CV and job
+        })
+        
+        return {
+            "success": True,
+            "message": "Job data added to session successfully",
+            "ready_for_writer": has_cv
+        }
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Error updating session: {str(e)}"
+        )
+
+
 @router.delete(
     "/session/{session_id}",
     summary="Delete Session",

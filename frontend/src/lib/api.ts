@@ -92,16 +92,24 @@ export async function uploadCV(file: File): Promise<CVExtractionResponse> {
   formData.append('file', file);
 
   try {
+    // Use AbortController for timeout handling
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 300000); // 5 minutes timeout
+
     const response = await fetch(`${API_BASE_URL}/cv/upload`, {
       method: 'POST',
       body: formData,
+      signal: controller.signal,
       // Don't set Content-Type header - browser will set it with boundary
     });
 
+    clearTimeout(timeoutId);
+
     if (!response.ok) {
       const errorData = await response.json().catch(() => ({}));
+      const errorMessage = errorData.detail || errorData.message || `CV upload failed with status ${response.status}`;
       throw new APIError(
-        errorData.detail || 'CV upload failed',
+        errorMessage,
         response.status,
         errorData.detail
       );
@@ -111,6 +119,22 @@ export async function uploadCV(file: File): Promise<CVExtractionResponse> {
   } catch (error) {
     if (error instanceof APIError) {
       throw error;
+    }
+    // AbortController timeout
+    if (error instanceof Error && error.name === 'AbortError') {
+      throw new APIError(
+        'CV upload timed out. The file may be too large or the server is taking too long to process. Please try again or contact support.',
+        0,
+        'Request timeout'
+      );
+    }
+    // Network errors or connection reset
+    if (error instanceof TypeError || (error instanceof Error && (error.message.includes('fetch') || error.message.includes('ECONNRESET') || error.message.includes('socket')))) {
+      throw new APIError(
+        'Cannot connect to backend server. Please ensure:\n1. The backend is running at http://localhost:8000\n2. Check backend logs for errors\n3. Try restarting the backend server',
+        0,
+        'Network connection failed'
+      );
     }
     throw new APIError(
       error instanceof Error ? error.message : 'Upload failed',
@@ -151,7 +175,7 @@ export async function validateCVData(cvData: any): Promise<any> {
 export async function extractJobFromURL(
   request: JobURLRequest
 ): Promise<JobExtractionResponse> {
-  return apiFetch<JobExtractionResponse>('/job/extract-url', {
+  return apiFetch<JobExtractionResponse>('/job/extract/url', {
     method: 'POST',
     body: JSON.stringify(request),
   });
@@ -163,7 +187,7 @@ export async function extractJobFromURL(
 export async function extractJobFromText(
   request: JobTextRequest
 ): Promise<JobExtractionResponse> {
-  return apiFetch<JobExtractionResponse>('/job/extract-text', {
+  return apiFetch<JobExtractionResponse>('/job/extract/text', {
     method: 'POST',
     body: JSON.stringify(request),
   });
@@ -175,7 +199,7 @@ export async function extractJobFromText(
 export async function researchCompany(
   request: CompanyResearchRequest
 ): Promise<CompanyResearchResponse> {
-  return apiFetch<CompanyResearchResponse>('/job/research-company', {
+  return apiFetch<CompanyResearchResponse>('/job/research/company', {
     method: 'POST',
     body: JSON.stringify(request),
   });
@@ -243,6 +267,32 @@ export async function sendSupervisorMessage(
   return apiFetch<SupervisorSessionResponse>('/supervisor/session/message', {
     method: 'POST',
     body: JSON.stringify(request),
+  });
+}
+
+/**
+ * Update supervisor session with CV data
+ */
+export async function updateSessionCV(
+  sessionId: string,
+  cvData: any
+): Promise<{ success: boolean; message: string }> {
+  return apiFetch(`/supervisor/session/${sessionId}/cv`, {
+    method: 'POST',
+    body: JSON.stringify(cvData),
+  });
+}
+
+/**
+ * Update supervisor session with job data
+ */
+export async function updateSessionJob(
+  sessionId: string,
+  jobData: any
+): Promise<{ success: boolean; message: string; ready_for_writer?: boolean }> {
+  return apiFetch(`/supervisor/session/${sessionId}/job`, {
+    method: 'POST',
+    body: JSON.stringify(jobData),
   });
 }
 

@@ -39,7 +39,12 @@ export default function Home() {
     handleFileInputChange,
     handleClickUpload,
     handleRemoveFile,
-  } = useFileUpload();
+  } = useFileUpload({ 
+    sessionId,
+    onCVUploaded: () => {
+      console.log('CV uploaded and supervisor notified');
+    }
+  });
   
   // Job input with backend integration
   const {
@@ -51,7 +56,12 @@ export default function Home() {
     submitJob,
     clearError: clearJobError,
     clearJob,
-  } = useJobInput();
+  } = useJobInput({
+    sessionId,
+    onJobSubmitted: () => {
+      console.log('Job submitted and supervisor notified');
+    }
+  });
   
   // Chat with supervisor agent
   const {

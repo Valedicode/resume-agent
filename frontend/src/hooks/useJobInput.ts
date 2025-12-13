@@ -3,8 +3,13 @@
  */
 
 import { useState, useCallback } from 'react';
-import { extractJobFromURL, extractJobFromText, getErrorMessage } from '@/lib/api';
+import { extractJobFromURL, extractJobFromText, updateSessionJob, getErrorMessage } from '@/lib/api';
 import type { JobRequirements } from '@/types';
+
+interface UseJobInputProps {
+  sessionId: string | null;
+  onJobSubmitted?: () => void;
+}
 
 interface UseJobInputReturn {
   jobText: string;
@@ -26,7 +31,7 @@ const isValidURL = (string: string): boolean => {
   }
 };
 
-export const useJobInput = (): UseJobInputReturn => {
+export const useJobInput = ({ sessionId, onJobSubmitted }: UseJobInputProps): UseJobInputReturn => {
   const [jobText, setJobText] = useState('');
   const [jobData, setJobData] = useState<JobRequirements | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
@@ -57,6 +62,17 @@ export const useJobInput = (): UseJobInputReturn => {
 
       if (response.success && response.job_data) {
         setJobData(response.job_data);
+        
+        // Update supervisor session with job data
+        if (sessionId) {
+          try {
+            await updateSessionJob(sessionId, response.job_data);
+            onJobSubmitted?.();
+          } catch (updateError) {
+            // Don't fail the submission if session update fails
+            console.warn('Failed to update supervisor session:', updateError);
+          }
+        }
       } else {
         setError(response.message || 'Failed to process job information');
       }
@@ -67,7 +83,7 @@ export const useJobInput = (): UseJobInputReturn => {
     } finally {
       setIsProcessing(false);
     }
-  }, [jobText]);
+  }, [jobText, sessionId, onJobSubmitted]);
 
   const clearError = useCallback(() => {
     setError(null);
