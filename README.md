@@ -109,21 +109,28 @@ Create a `.env.local` file in `frontend/` (based on `frontend/env.example` if pr
 
 ### Running the app
 
-In one terminal, start the backend from the project root:
+**Quick Start:**
+
+**Terminal 1 - Start Backend:**
 
 ```bash
 cd backend
-uvicorn app.main:app --reload
+python -m uvicorn app.main:app --reload
 ```
 
-In another terminal, start the frontend:
+Wait for: `Application startup complete.`
+
+**Terminal 2 - Start Frontend:**
 
 ```bash
 cd frontend
 pnpm dev
+# or: npm run dev
 ```
 
-Then open the printed URL (typically `http://localhost:3000`) in your browser.
+Wait for: `Ready on http://localhost:3000`
+
+Then open `http://localhost:3000` in your browser.
 
 ---
 
