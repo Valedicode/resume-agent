@@ -20,7 +20,7 @@ interface UseFileUploadReturn {
   isUploading: boolean;
   needsClarification: boolean;
   clarificationQuestions: string[] | null;
-  fileInputRef: React.RefObject<HTMLInputElement>;
+  fileInputRef: React.RefObject<HTMLInputElement | null>;
   handleDragOver: (e: React.DragEvent) => void;
   handleDragLeave: (e: React.DragEvent) => void;
   handleDrop: (e: React.DragEvent) => void;
@@ -39,7 +39,7 @@ export const useFileUpload = ({ sessionId, onCVUploaded }: UseFileUploadProps): 
   const [isUploading, setIsUploading] = useState(false);
   const [needsClarification, setNeedsClarification] = useState(false);
   const [clarificationQuestions, setClarificationQuestions] = useState<string[] | null>(null);
-  const fileInputRef = useRef<HTMLInputElement>(null);
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
 
   const uploadFileToBackend = useCallback(async (file: File) => {
     setIsUploading(true);
