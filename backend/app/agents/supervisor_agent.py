@@ -655,6 +655,10 @@ To get started, just share your CV file with me!"""
             - What you can do: Mention CV analysis, job matching, tailored CVs, cover letters
             - Technical issues: Be supportive and offer alternatives
             
+            IMPORTANT: Avoid complex markdown structure (no ### or deeper headers, no - lists, no code blocks)
+            You may use simple formatting: ## for section headers, **bold** for emphasis, and *italic* for subtle emphasis
+            Format responses with simple line breaks and plain text structure.
+            
             Keep responses concise and actionable."""),
             ("user", "{user_input}")
         ])
