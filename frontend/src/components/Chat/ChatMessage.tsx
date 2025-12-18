@@ -5,6 +5,82 @@ interface ChatMessageProps {
 }
 
 export const ChatMessage = ({ message }: ChatMessageProps) => {
+  // Simple markdown-like formatting for plain text
+  // Converts ## headers, **text** to bold, *text* to italic, and preserves line breaks
+  const formatText = (text: string) => {
+    // Split by line breaks to preserve structure
+    return text.split('\n').map((line, lineIndex) => {
+      // Check if line is a header (## Header text)
+      const headerMatch = line.match(/^##\s+(.+)$/);
+      if (headerMatch) {
+        return (
+          <h3 key={lineIndex} className="mt-4 mb-2 text-base font-semibold text-slate-900 dark:text-slate-100 first:mt-0">
+            {headerMatch[1]}
+          </h3>
+        );
+      }
+      
+      // Simple formatting: **bold** and *italic*
+      const parts: (string | React.ReactElement)[] = [];
+      let lastIndex = 0;
+      let key = 0;
+      
+      // Match **bold** and *italic* patterns
+      const boldRegex = /\*\*([^*]+)\*\*/g;
+      const italicRegex = /(?<!\*)\*([^*]+)\*(?!\*)/g;
+      
+      // Find all matches
+      const matches: Array<{ start: number; end: number; type: 'bold' | 'italic'; text: string }> = [];
+      
+      let match;
+      while ((match = boldRegex.exec(line)) !== null) {
+        matches.push({ start: match.index, end: match.index + match[0].length, type: 'bold', text: match[1] });
+      }
+      while ((match = italicRegex.exec(line)) !== null) {
+        // Check if not part of a bold match
+        const isPartOfBold = matches.some(m => match!.index >= m.start && match!.index < m.end);
+        if (!isPartOfBold) {
+          matches.push({ start: match.index, end: match.index + match[0].length, type: 'italic', text: match[1] });
+        }
+      }
+      
+      // Sort matches by position
+      matches.sort((a, b) => a.start - b.start);
+      
+      // Build parts array
+      matches.forEach((m) => {
+        // Add text before match
+        if (m.start > lastIndex) {
+          parts.push(line.substring(lastIndex, m.start));
+        }
+        // Add formatted match
+        if (m.type === 'bold') {
+          parts.push(<strong key={key++}>{m.text}</strong>);
+        } else {
+          parts.push(<em key={key++}>{m.text}</em>);
+        }
+        lastIndex = m.end;
+      });
+      
+      // Add remaining text
+      if (lastIndex < line.length) {
+        parts.push(line.substring(lastIndex));
+      }
+      
+      // If no matches, return original line
+      if (parts.length === 0) {
+        parts.push(line);
+      }
+      
+      return (
+        <span key={lineIndex}>
+          {parts}
+          {lineIndex < text.split('\n').length - 1 && <br />}
+        </span>
+      );
+    });
+  };
+
   return (
     <div
       className={`flex gap-4 ${
@@ -25,7 +101,9 @@ export const ChatMessage = ({ message }: ChatMessageProps) => {
             : 'bg-slate-100 text-slate-900 dark:bg-slate-700 dark:text-slate-100'
         }`}
       >
-        <p className="whitespace-pre-wrap text-sm leading-relaxed">{message.content}</p>
+        <div className="text-sm leading-relaxed whitespace-pre-wrap">
+          {formatText(message.content)}
+        </div>
       </div>
       {message.role === 'user' && (
         <div className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full bg-slate-200 dark:bg-slate-700">
