@@ -156,6 +156,21 @@ async def send_message(
         session["user_input"] = request.user_input
         session["conversation_count"] += 1
         
+        # Debug: Log session state before invoking graph
+        print(f"\n=== Session State Before Graph Invocation ===")
+        print(f"Session ID: {request.session_id}")
+        print(f"Has CV Data: {session.get('cv_data') is not None}")
+        print(f"Has Job Data: {session.get('job_data') is not None}")
+        print(f"Session Stage: {session.get('session_stage')}")
+        print(f"Current Agent: {session.get('current_agent')}")
+        if session.get('cv_data'):
+            cv_preview = str(session.get('cv_data'))[:100] + "..." if len(str(session.get('cv_data'))) > 100 else str(session.get('cv_data'))
+            print(f"CV Data Preview: {cv_preview}")
+        if session.get('job_data'):
+            job_preview = str(session.get('job_data'))[:100] + "..." if len(str(session.get('job_data'))) > 100 else str(session.get('job_data'))
+            print(f"Job Data Preview: {job_preview}")
+        print(f"============================================\n")
+        
         # Prepare config for graph (for checkpointing)
         config = {"configurable": {"thread_id": request.session_id}}
         
@@ -190,7 +205,12 @@ async def send_message(
             
         except Exception as e:
             # Handle errors in graph execution
+            import traceback
+            error_trace = traceback.format_exc()
             error_message = f"I encountered an error: {str(e)}\n\nPlease try rephrasing your request or type 'help' for guidance."
+            
+            # Log the full error for debugging
+            print(f"Error in supervisor graph execution: {error_trace}")
             
             return SupervisorSessionResponse(
                 success=False,
