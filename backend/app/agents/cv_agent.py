@@ -20,7 +20,7 @@ Tools:
 - update_resume_with_clarifications: Update tool (incorporates user answers)
 
 Data Model:
-- ResumeInfo: Pydantic model defining resume structure (name, email, phone, skills, education, experience)
+- ResumeInfo: Pydantic model defining resume structure (name, email, phone, skills, education, experience, projects)
 """
 
 from pydantic import BaseModel, Field
