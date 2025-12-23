@@ -184,27 +184,94 @@ def invoke_cv_agent(state: SupervisorState) -> dict:
     Node 2: Extract CV information using CV agent as a tool.
     
     Workflow:
-    1. Extract resume info from PDF
-    2. Check for ambiguities
-    3. If ambiguities exist, set them as pending questions
-    4. If no ambiguities, mark CV as complete
+    1. Check if CV data already exists in state (from API upload)
+    2. If not, extract resume info from PDF file path
+    3. Check for ambiguities
+    4. If ambiguities exist, set them as pending questions
+    5. If no ambiguities, mark CV as complete
+    
+    Supports two flows:
+    - Frontend API upload: CV data already in state (from /api/cv/upload)
+    - CLI/Testing: File path provided in user_input
     """
     user_input = state.get("user_input", "")
+    existing_cv_data = state.get("cv_data")
     
+    # Flow 1: CV data already exists (from frontend API upload)
+    if existing_cv_data:
+        try:
+            # Convert CV data to JSON string if needed
+            if isinstance(existing_cv_data, dict):
+                cv_data_json = json.dumps(existing_cv_data, indent=2)
+            elif isinstance(existing_cv_data, str):
+                cv_data_json = existing_cv_data
+            else:
+                cv_data_json = json.dumps(existing_cv_data)
+            
+            # Check for ambiguities
+            questions = identify_ambiguities.invoke({"resume_json": cv_data_json})
+            
+            # Determine if clarification needed
+            needs_clarification = "no questions" not in questions.lower()
+            
+            if needs_clarification:
+                response = f"""Great! I've extracted your CV information. 
+
+I have a few clarifying questions to ensure everything is accurate:
+
+{questions}
+
+Please provide your answers, and I'll update your CV data accordingly."""
+                
+                return {
+                    "cv_data": cv_data_json,
+                    "pending_questions": questions,
+                    "needs_clarification": True,
+                    "supervisor_response": response,
+                    "next_action": "wait_for_clarification",
+                    "session_stage": "collecting_cv",
+                    "messages": [{"role": "assistant", "content": response}]
+                }
+            else:
+                response = f"""Perfect! I've successfully extracted your CV information.
+
+Here's a quick summary:
+{_format_cv_summary(cv_data_json)}
+
+Now, please provide the job posting. You can either:
+- Share a URL to the job posting
+- Paste the job description text directly"""
+                
+                return {
+                    "cv_data": cv_data_json,
+                    "needs_clarification": False,
+                    "supervisor_response": response,
+                    "next_action": "wait_for_job",
+                    "session_stage": "collecting_job",
+                    "messages": [{"role": "assistant", "content": response}]
+                }
+                
+        except Exception as e:
+            return {
+                "supervisor_response": f"I encountered an error processing your CV data: {str(e)}\n\nPlease try uploading your CV again.",
+                "next_action": "wait_for_input",
+                "messages": [{"role": "assistant", "content": f"Error processing CV data: {str(e)}"}]
+            }
+    
+    # Flow 2: Extract from file path (CLI/Testing mode)
     # Extract file path from user input (simple pattern matching)
-    # In production, this would be more sophisticated
     cv_path = user_input.strip().strip('"').strip("'")
     
     # Check if file exists
     if not Path(cv_path).exists():
         return {
-            "supervisor_response": f"I couldn't find the CV file at: {cv_path}\n\nPlease provide a valid file path.",
+            "supervisor_response": f"I couldn't find the CV file at: {cv_path}\n\nPlease provide a valid file path, or upload your CV through the web interface.",
             "next_action": "wait_for_input",
             "messages": [{"role": "assistant", "content": f"CV file not found: {cv_path}"}]
         }
     
     try:
-        # Step 1: Extract resume info
+        # Step 1: Extract resume info from file path
         cv_data = extract_resume_info.invoke({"pdf_path": cv_path})
         
         # Step 2: Check for ambiguities
@@ -659,9 +726,6 @@ IMPORTANT: This data is available throughout our conversation. When you need to 
                 
                 # Insert system message at the beginning
                 writer_messages = [{"role": "system", "content": system_context}] + writer_messages
-            
-            # Insert system message at the beginning
-            writer_messages = [{"role": "system", "content": system_context}] + writer_messages
         
         # Append the new user input to the conversation history
         writer_messages.append({"role": "user", "content": user_input})
@@ -825,6 +889,7 @@ def route_after_intent(state: SupervisorState) -> str:
     intent = state.get("intent", "")
     current_agent = state.get("current_agent", "supervisor")
     pending_questions = state.get("pending_questions")
+    has_cv = state.get("cv_data") is not None
     
     # If Writer is active, continue with Writer
     if current_agent == "writer":
@@ -836,7 +901,6 @@ def route_after_intent(state: SupervisorState) -> str:
     
     # Special handling for start_tailoring: check readiness first
     if intent == "start_tailoring":
-        has_cv = state.get("cv_data") is not None
         has_job = state.get("job_data") is not None
         
         if has_cv and has_job:
@@ -846,9 +910,19 @@ def route_after_intent(state: SupervisorState) -> str:
         else:  # not has_job
             return "handle_missing_data"
     
+    # Special handling for upload_cv: if CV data already exists but not processed, process it
+    # This handles the case where CV was uploaded via API and user sends a message
+    if intent == "upload_cv":
+        if has_cv:
+            # CV data exists (from API upload), check if it needs processing
+            # invoke_cv will handle checking ambiguities if CV data exists
+            return "invoke_cv"
+        else:
+            # No CV data, extract from file path
+            return "invoke_cv"
+    
     # Route based on intent
     intent_routing = {
-        "upload_cv": "invoke_cv",
         "provide_job_url": "invoke_job",
         "provide_job_text": "invoke_job",
         "research_company": "invoke_company_research",
