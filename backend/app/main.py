@@ -7,7 +7,7 @@ from fastapi.responses import FileResponse
 from contextlib import asynccontextmanager
 from pathlib import Path
 
-from app.api import cv_router, job_router, writer_router
+from app.api import cv_router, job_router, writer_router, audio_router
 from app.services.generic_session_manager import get_session_manager
 
 
@@ -55,6 +55,7 @@ app = FastAPI(
 app.include_router(cv_router)
 app.include_router(job_router)
 app.include_router(writer_router)
+app.include_router(audio_router)
 
 # Configure file serving directory
 DATA_DIR = Path(__file__).parent.parent / "data"
@@ -73,7 +74,8 @@ async def root():
         "agents": {
             "cv": "/api/cv",
             "job": "/api/job",
-            "writer": "/api/writer"
+            "writer": "/api/writer",
+            "audio": "/api/audio"
         }
     }
 
@@ -95,7 +97,8 @@ async def health_check():
         "endpoints": {
             "cv": "/api/cv",
             "job": "/api/job",
-            "writer": "/api/writer"
+            "writer": "/api/writer",
+            "audio": "/api/audio"
         }
     }
 

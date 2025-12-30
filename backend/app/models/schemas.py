@@ -290,6 +290,96 @@ class FileUploadResponse(BaseModel):
 
 
 # ============================================
+# Audio Transcription Models
+# ============================================
+
+class TranscriptionRequest(BaseModel):
+    """Request parameters for audio transcription (used for query params)."""
+    model: Literal["whisper-1", "gpt-4o-transcribe", "gpt-4o-mini-transcribe", "gpt-4o-transcribe-diarize"] = Field(
+        default="gpt-4o-transcribe",
+        description="Model to use for transcription"
+    )
+    response_format: Literal["json", "text", "srt", "verbose_json", "vtt", "diarized_json"] = Field(
+        default="json",
+        description="Format of the transcription response"
+    )
+    language: Optional[str] = Field(
+        default=None,
+        description="Language code (ISO 639-1 or 639-3) for the audio"
+    )
+    prompt: Optional[str] = Field(
+        default=None,
+        description="Optional text to guide the model's style or continue a previous audio segment"
+    )
+    temperature: Optional[float] = Field(
+        default=None,
+        ge=0.0,
+        le=1.0,
+        description="Sampling temperature (0-1). Higher values make output more random."
+    )
+    timestamp_granularities: Optional[List[Literal["word", "segment"]]] = Field(
+        default=None,
+        description="Granularity of timestamps (only for whisper-1)"
+    )
+    chunking_strategy: Optional[Literal["auto"]] = Field(
+        default=None,
+        description="Chunking strategy for long audio (required for gpt-4o-transcribe-diarize when audio > 30s)"
+    )
+
+
+class TranscriptionResponse(BaseModel):
+    """Response from audio transcription."""
+    success: bool
+    text: Optional[str] = Field(default=None, description="Transcribed text")
+    segments: Optional[List[Dict[str, Any]]] = Field(
+        default=None,
+        description="Segments with timestamps (for verbose_json or diarized_json formats)"
+    )
+    words: Optional[List[Dict[str, Any]]] = Field(
+        default=None,
+        description="Word-level timestamps (for verbose_json with word granularity)"
+    )
+    message: str
+
+
+class TranslationRequest(BaseModel):
+    """Request parameters for audio translation (used for query params)."""
+    model: Literal["whisper-1"] = Field(
+        default="whisper-1",
+        description="Model to use for translation (only whisper-1 supported)"
+    )
+    response_format: Literal["json", "text", "srt", "verbose_json", "vtt"] = Field(
+        default="json",
+        description="Format of the translation response"
+    )
+    prompt: Optional[str] = Field(
+        default=None,
+        description="Optional text to guide the model's style"
+    )
+    temperature: Optional[float] = Field(
+        default=None,
+        ge=0.0,
+        le=1.0,
+        description="Sampling temperature (0-1)"
+    )
+
+
+class TranslationResponse(BaseModel):
+    """Response from audio translation."""
+    success: bool
+    text: Optional[str] = Field(default=None, description="Translated text (always in English)")
+    segments: Optional[List[Dict[str, Any]]] = Field(
+        default=None,
+        description="Segments with timestamps (for verbose_json format)"
+    )
+    words: Optional[List[Dict[str, Any]]] = Field(
+        default=None,
+        description="Word-level timestamps (for verbose_json with word granularity)"
+    )
+    message: str
+
+
+# ============================================
 # Generic Response Models
 # ============================================
 
