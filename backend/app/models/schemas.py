@@ -205,56 +205,76 @@ class GenerateCoverLetterResponse(BaseModel):
 
 
 # ============================================
-# Supervisor Agent Models
+# Writer Chat Models (Conversational Interface)
 # ============================================
 
-class SupervisorMessage(BaseModel):
-    """A single message in supervisor conversation."""
-    role: Literal["user", "assistant", "system"]
-    content: str
-
-
-class SupervisorSessionRequest(BaseModel):
-    """Request to interact with supervisor agent."""
-    session_id: str = Field(
-        ...,
-        description="Unique session identifier for conversation continuity"
-    )
-    user_input: str = Field(
-        ...,
-        description="User's message to the supervisor"
-    )
-
-
-class SupervisorSessionState(BaseModel):
-    """Current state of a supervisor session."""
-    session_stage: str = Field(description="Current stage: init, collecting_cv, collecting_job, writer_session, complete")
-    has_cv_data: bool = Field(description="Whether CV data has been collected")
-    has_job_data: bool = Field(description="Whether job data has been collected")
-    has_company_data: bool = Field(description="Whether company data has been collected")
-    needs_clarification: bool = Field(description="Whether CV clarification is needed")
-    ready_for_writer: bool = Field(description="Whether ready to start tailoring")
-    current_agent: str = Field(description="Currently active agent")
-
-
-class SupervisorSessionResponse(BaseModel):
-    """Response from supervisor interaction."""
-    success: bool
-    assistant_message: str = Field(description="Supervisor's response to user")
-    session_state: Optional[SupervisorSessionState] = None
-    next_action: Optional[str] = Field(
+class WriterChatSessionInitRequest(BaseModel):
+    """Request to start a new Writer chat session."""
+    cv_data: Dict[str, Any] = Field(description="Resume data from CV agent")
+    job_data: Optional[Dict[str, Any]] = Field(
         default=None,
-        description="Suggested next action (wait_for_input, upload_cv, provide_job, etc.)"
+        description="Job requirements from job agent (optional for resume refinement mode)"
     )
-    message: str = Field(description="Status or error message")
+    mode: Literal["resume_refinement", "job_tailoring"] = Field(
+        default="resume_refinement",
+        description="Chat mode: resume_refinement (CV only) or job_tailoring (CV + job)"
+    )
 
 
-class SupervisorSessionInitResponse(BaseModel):
-    """Response when creating a new supervisor session."""
+class WriterChatSessionInitResponse(BaseModel):
+    """Response when starting a Writer chat session."""
     success: bool
-    session_id: str
-    welcome_message: str
-    message: str
+    session_id: str = Field(description="Session ID for subsequent chat messages")
+    initial_message: str = Field(description="Writer's initial greeting/summary")
+    message: str = Field(description="Status message")
+
+
+class WriterChatMessageRequest(BaseModel):
+    """Request to send a message in Writer chat."""
+    session_id: str = Field(description="Session identifier from init")
+    user_message: str = Field(description="User's message to the Writer agent")
+
+
+class GeneratedFile(BaseModel):
+    """Metadata for a generated file."""
+    filename: str = Field(description="Name of the generated file")
+    file_type: str = Field(description="Type of file (cv, cover_letter, etc.)")
+    download_url: str = Field(description="URL to download the file")
+
+
+class WriterChatMessageResponse(BaseModel):
+    """Response from Writer agent."""
+    success: bool
+    assistant_message: str = Field(description="Writer's response")
+    requires_approval: bool = Field(
+        default=False,
+        description="Whether user approval is needed before proceeding"
+    )
+    preview_content: Optional[str] = Field(
+        default=None,
+        description="Preview content for user review (e.g., tailoring plan)"
+    )
+    generated_files: Optional[List[GeneratedFile]] = Field(
+        default=None,
+        description="List of files generated in this response (for download)"
+    )
+    message: str = Field(description="Status message")
+
+
+class ResumeSummaryRequest(BaseModel):
+    """Request to generate resume summary."""
+    cv_data: Dict[str, Any] = Field(description="Resume data from CV agent")
+
+
+class ResumeSummaryResponse(BaseModel):
+    """Response with resume summary."""
+    success: bool
+    summary: str = Field(description="Neutral summary of the resume")
+    suggestions: Optional[List[str]] = Field(
+        default=None,
+        description="Optional suggestions for improvement"
+    )
+    message: str = Field(description="Status message")
 
 
 # ============================================
