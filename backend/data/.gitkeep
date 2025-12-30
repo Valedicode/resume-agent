@@ -1,0 +1,3 @@
+# This file ensures the data directory is tracked by git
+# Generated PDF files in this directory are ignored (see .gitignore)
+
