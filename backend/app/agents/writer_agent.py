@@ -33,7 +33,7 @@ Key Features:
 - Company-aware cover letter generation
 """
 
-from pydantic import BaseModel, Field
+from pydantic import Field
 from langchain.agents import create_agent
 from langchain_core.tools import tool
 from langchain_openai import ChatOpenAI
@@ -41,6 +41,9 @@ from langchain_core.prompts import ChatPromptTemplate
 from pathlib import Path
 import json
 import dotenv
+
+# Import models from centralized schemas
+from app.models.schemas import CVTailoringPlan, CoverLetterContent
 
 dotenv.load_dotenv()
 
@@ -211,39 +214,6 @@ p {
     margin-top: 3em;
 }
 """
-
-# ============================================
-# Pydantic Models (Data Contracts)
-# ============================================
-
-class CVTailoringPlan(BaseModel):
-    """
-    Plan for tailoring the CV to match job requirements.
-    
-    This model represents the gap analysis output, identifying which parts
-    of the CV should be emphasized, modified, or reordered to better align
-    with the target job.
-    """
-    matching_experiences: list[str] = Field(description="Experience entries from CV that strongly match job requirements")
-    matching_skills: list[str] = Field(description="Skills from CV that align with required/preferred job skills")
-    relevant_projects: list[str] = Field(description="Projects from CV most relevant to this job")
-    keywords_to_incorporate: list[str] = Field(description="Job-specific keywords that should be naturally woven into descriptions")
-    reordering_suggestions: str = Field(description="Specific suggestions for reordering sections/items by relevance")
-    emphasis_points: list[str] = Field(description="Specific achievements or experiences to emphasize more strongly")
-    reasoning: str = Field(description="Comprehensive explanation of why these changes improve CV-job alignment")
-
-class CoverLetterContent(BaseModel):
-    """
-    Structured content for a cover letter.
-    
-    Breaks the cover letter into logical paragraphs that can be
-    easily formatted and converted to PDF.
-    """
-    opening_paragraph: str = Field(description="Opening expressing interest in the specific position and company")
-    body_paragraph_1: str = Field(description="First body paragraph connecting relevant experience to job requirements")
-    body_paragraph_2: str = Field(description="Second body paragraph highlighting additional relevant qualifications")
-    body_paragraph_3: str = Field(default="",description="Optional third body paragraph if needed for company-specific points")
-    closing_paragraph: str = Field(description="Closing with call to action and appreciation")
 
 # ============================================
 # Tools (Agent Capabilities)

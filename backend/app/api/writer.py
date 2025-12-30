@@ -7,6 +7,7 @@ cover letter generation, and conversational chat interface.
 
 from fastapi import APIRouter, HTTPException, status, Depends
 import json
+import re
 
 from app.models.schemas import (
     CVJobAlignmentRequest,
@@ -203,8 +204,10 @@ async def generate_cv(request: GenerateTailoredCVRequest):
                 detail=pdf_result
             )
         
-        # Extract path from result message
-        pdf_path = pdf_result.split("at: ")[-1] if "at: " in pdf_result else None
+        # Extract filename from result message
+        # Format: "CV PDF generated successfully! The file '{filename}' is ready for download."
+        match = re.search(r"The file '([^']+)' is ready for download", pdf_result)
+        pdf_path = match.group(1) if match else None
         
         return GenerateTailoredCVResponse(
             success=True,
@@ -318,8 +321,10 @@ async def generate_cover_letter(request: GenerateCoverLetterRequest):
                 detail=pdf_result
             )
         
-        # Extract path from result message
-        pdf_path = pdf_result.split("at: ")[-1] if "at: " in pdf_result else None
+        # Extract filename from result message
+        # Format: "CV PDF generated successfully! The file '{filename}' is ready for download."
+        match = re.search(r"The file '([^']+)' is ready for download", pdf_result)
+        pdf_path = match.group(1) if match else None
         
         return GenerateCoverLetterResponse(
             success=True,

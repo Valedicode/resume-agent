@@ -189,11 +189,11 @@ class GenerateCoverLetterRequest(BaseModel):
 
 class CoverLetterContent(BaseModel):
     """Structured cover letter content."""
-    opening_paragraph: str
-    body_paragraph_1: str
-    body_paragraph_2: str
-    body_paragraph_3: Optional[str] = ""
-    closing_paragraph: str
+    opening_paragraph: str = Field(description="Opening expressing interest in the specific position and company")
+    body_paragraph_1: str = Field(description="First body paragraph connecting relevant experience to job requirements")
+    body_paragraph_2: str = Field(description="Second body paragraph highlighting additional relevant qualifications")
+    body_paragraph_3: str = Field(default="", description="Optional third body paragraph if needed for company-specific points")
+    closing_paragraph: str = Field(description="Closing with call to action and appreciation")
 
 
 class GenerateCoverLetterResponse(BaseModel):
