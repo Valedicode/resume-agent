@@ -218,6 +218,79 @@ export interface ResumeSummaryResponse {
 }
 
 // ============================================
+// Audio Transcription Types
+// ============================================
+
+export type TranscriptionModel = 
+  | 'whisper-1' 
+  | 'gpt-4o-transcribe' 
+  | 'gpt-4o-mini-transcribe' 
+  | 'gpt-4o-transcribe-diarize';
+
+export type TranscriptionResponseFormat = 
+  | 'json' 
+  | 'text' 
+  | 'srt' 
+  | 'verbose_json' 
+  | 'vtt' 
+  | 'diarized_json';
+
+export interface TranscriptionRequest {
+  file: File;
+  model?: TranscriptionModel;
+  response_format?: TranscriptionResponseFormat;
+  language?: string;
+  prompt?: string;
+  temperature?: number;
+  timestamp_granularities?: ('word' | 'segment')[];
+  chunking_strategy?: 'auto';
+}
+
+export interface TranscriptionSegment {
+  id: number;
+  seek: number;
+  start: number;
+  end: number;
+  text: string;
+  tokens: number[];
+  temperature: number;
+  avg_logprob: number;
+  compression_ratio: number;
+  no_speech_prob: number;
+  speaker?: string; // For diarized_json format
+}
+
+export interface TranscriptionWord {
+  word: string;
+  start: number;
+  end: number;
+}
+
+export interface TranscriptionResponse {
+  success: boolean;
+  text?: string | null;
+  segments?: TranscriptionSegment[] | null;
+  words?: TranscriptionWord[] | null;
+  message: string;
+}
+
+export interface TranslationRequest {
+  file: File;
+  model?: 'whisper-1';
+  response_format?: 'json' | 'text' | 'srt' | 'verbose_json' | 'vtt';
+  prompt?: string;
+  temperature?: number;
+}
+
+export interface TranslationResponse {
+  success: boolean;
+  text?: string | null;
+  segments?: TranscriptionSegment[] | null;
+  words?: TranscriptionWord[] | null;
+  message: string;
+}
+
+// ============================================
 // Application State Types
 // ============================================
 

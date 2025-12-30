@@ -26,6 +26,10 @@ import {
   WriterChatMessageResponse,
   ResumeSummaryRequest,
   ResumeSummaryResponse,
+  TranscriptionRequest,
+  TranscriptionResponse,
+  TranslationRequest,
+  TranslationResponse,
   ErrorResponse,
 } from '@/types';
 
@@ -428,6 +432,163 @@ export async function healthCheck(): Promise<any> {
   return apiFetch<any>('/health', {
     method: 'GET',
   });
+}
+
+// ============================================
+// Audio Transcription API
+// ============================================
+
+/**
+ * Transcribe audio file to text
+ */
+export async function transcribeAudio(
+  request: TranscriptionRequest
+): Promise<TranscriptionResponse> {
+  const formData = new FormData();
+  formData.append('file', request.file);
+  
+  if (request.model) {
+    formData.append('model', request.model);
+  }
+  if (request.response_format) {
+    formData.append('response_format', request.response_format);
+  }
+  if (request.language) {
+    formData.append('language', request.language);
+  }
+  if (request.prompt) {
+    formData.append('prompt', request.prompt);
+  }
+  if (request.temperature !== undefined) {
+    formData.append('temperature', request.temperature.toString());
+  }
+  if (request.timestamp_granularities) {
+    request.timestamp_granularities.forEach(granularity => {
+      formData.append('timestamp_granularities[]', granularity);
+    });
+  }
+  if (request.chunking_strategy) {
+    formData.append('chunking_strategy', request.chunking_strategy);
+  }
+
+  try {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 300000); // 5 minutes timeout
+
+    const response = await fetch(`${API_BASE_URL}/audio/transcribe`, {
+      method: 'POST',
+      body: formData,
+      signal: controller.signal,
+      // Don't set Content-Type header - browser will set it with boundary
+    });
+
+    clearTimeout(timeoutId);
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      const errorMessage = errorData.detail || errorData.message || `Transcription failed with status ${response.status}`;
+      throw new APIError(
+        errorMessage,
+        response.status,
+        errorData.detail
+      );
+    }
+
+    return await response.json();
+  } catch (error) {
+    if (error instanceof APIError) {
+      throw error;
+    }
+    if (error instanceof Error && error.name === 'AbortError') {
+      throw new APIError(
+        'Transcription timed out. The file may be too large or the server is taking too long to process. Please try again.',
+        0,
+        'Request timeout'
+      );
+    }
+    if (error instanceof TypeError || (error instanceof Error && (error.message.includes('fetch') || error.message.includes('ECONNRESET')))) {
+      throw new APIError(
+        'Cannot connect to backend server. Please ensure the backend is running at http://localhost:8000',
+        0,
+        'Network connection failed'
+      );
+    }
+    throw new APIError(
+      error instanceof Error ? error.message : 'Transcription failed',
+      0
+    );
+  }
+}
+
+/**
+ * Translate audio file to English
+ */
+export async function translateAudio(
+  request: TranslationRequest
+): Promise<TranslationResponse> {
+  const formData = new FormData();
+  formData.append('file', request.file);
+  
+  if (request.model) {
+    formData.append('model', request.model);
+  }
+  if (request.response_format) {
+    formData.append('response_format', request.response_format);
+  }
+  if (request.prompt) {
+    formData.append('prompt', request.prompt);
+  }
+  if (request.temperature !== undefined) {
+    formData.append('temperature', request.temperature.toString());
+  }
+
+  try {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 300000); // 5 minutes timeout
+
+    const response = await fetch(`${API_BASE_URL}/audio/translate`, {
+      method: 'POST',
+      body: formData,
+      signal: controller.signal,
+      // Don't set Content-Type header - browser will set it with boundary
+    });
+
+    clearTimeout(timeoutId);
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      const errorMessage = errorData.detail || errorData.message || `Translation failed with status ${response.status}`;
+      throw new APIError(
+        errorMessage,
+        response.status,
+        errorData.detail
+      );
+    }
+
+    return await response.json();
+  } catch (error) {
+    if (error instanceof APIError) {
+      throw error;
+    }
+    if (error instanceof Error && error.name === 'AbortError') {
+      throw new APIError(
+        'Translation timed out. The file may be too large or the server is taking too long to process. Please try again.',
+        0,
+        'Request timeout'
+      );
+    }
+    if (error instanceof TypeError || (error instanceof Error && (error.message.includes('fetch') || error.message.includes('ECONNRESET')))) {
+      throw new APIError(
+        'Cannot connect to backend server. Please ensure the backend is running at http://localhost:8000',
+        0,
+        'Network connection failed'
+      );
+    }
+    throw new APIError(
+      error instanceof Error ? error.message : 'Translation failed',
+      0
+    );
+  }
 }
 
 // ============================================

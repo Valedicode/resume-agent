@@ -23,7 +23,6 @@ Data Model:
 - ResumeInfo: Pydantic model defining resume structure (name, email, phone, skills, education, experience, projects)
 """
 
-from pydantic import BaseModel, Field
 from langchain.agents import create_agent
 from langchain_core.tools import tool
 from langchain_openai import ChatOpenAI
@@ -32,19 +31,13 @@ from pathlib import Path
 import fitz
 import dotenv
 
+# Import model from centralized schemas
+from app.models.schemas import ResumeInfo
+
 dotenv.load_dotenv()
 
 # Default test CV path
 DEFAULT_TEST_CV = Path(__file__).parent.parent.parent / "data" / "CV.pdf"
-
-class ResumeInfo(BaseModel):
-    name: str = Field(description="Full name of the applicant")
-    email: str = Field(description="Email address of the applicant")
-    phone: str = Field(description="Phone number of the applicant")
-    skills: list[str] = Field(description="List of professional skills")
-    education: list[str] = Field(description="Educational qualifications")
-    experience: list[str] = Field(description="Work experience entries")
-    projects: list[str] = Field(description="List of projects the applicant has worked on")
 
 @tool
 def extract_resume_info(pdf_path: str = "", pdf_bytes: bytes = b"") -> str:

@@ -24,7 +24,6 @@ Data Models:
 - CompanyInfo: Structured company data (values, culture, mission, industry, etc.)
 """
 
-from pydantic import BaseModel, Field
 from langchain.agents import create_agent
 from langchain_core.tools import tool
 from langchain_openai import ChatOpenAI
@@ -32,31 +31,12 @@ from langchain_core.prompts import ChatPromptTemplate
 from langchain_community.document_loaders import WebBaseLoader
 from langchain_tavily import TavilySearch
 
+# Import models from centralized schemas
+from app.models.schemas import JobRequirements, CompanyInfo
+
 import dotenv
 
-dotenv.load_dotenv() 
-
-class JobRequirements(BaseModel):
-    job_title: str = Field(description="The exact job title or position name")
-    job_level: str = Field(description="Experience level required for this position, e.g. 'entry', 'mid-level', 'senior', 'lead'")
-    required_skills: list[str] = Field(description="Technical skills that are mandatory for this role, e.g. Python, AWS, Docker, React")
-    preferred_skills: list[str] = Field(default=[], description="Skills that are nice-to-have but not required")
-    years_experience: int | None = Field(default=None, description="Required years of experience if specified, e.g. 3, 5, 7")
-    employment_type: str = Field(description="Type of employment, e.g. 'Full-time', 'Part-time', 'Contract', 'Internship'")
-    location: str = Field(description="Job location, e.g. 'Remote', 'Hybrid', 'On-Site")
-    responsibilities: list[str] = Field(description="Key responsibilities and tasks expected in this role")
-    qualifications: list[str] = Field(default=[], description="Education requirements, certifications, or other qualifications needed")
-    key_requirements: list[str] = Field(description="Critical must-have requirements beyond skills, e.g. 'Must have security clearance', 'Must be available for on-call'")
-
-class CompanyInfo(BaseModel):
-    company_name: str = Field(description="The official name of the company")
-    industry: str = Field(description="Industry sector the company operates in, e.g. 'Technology', 'Healthcare', 'Finance'")
-    company_size: str | None = Field(default=None, description="Company size category, e.g. 'Startup', 'Small (1-50)', 'Medium (51-200)', 'Large (200+)'")
-    mission_statement: str | None = Field(default=None, description="Company's mission statement or core purpose")
-    core_values: list[str] = Field(description="Company's core values and principles, e.g. 'Innovation', 'Customer-first', 'Diversity'")
-    recent_news: list[str] = Field(default=[], description="Recent news articles, press releases, or significant company developments")
-    company_culture: str = Field(description="Description of company culture, work environment, and what it's like to work there")
-    products_services: list[str] = Field(default=[], description="Main products or services the company offers")
+dotenv.load_dotenv()
 
 @tool
 def retrieve_web(web_urls: list[str]) -> str:
