@@ -4,7 +4,7 @@
 
 import { useState, useRef, useCallback } from 'react';
 import { validateFile } from '@/lib/utils';
-import { uploadCV, updateSessionCV, isAPIError, getErrorMessage } from '@/lib/api';
+import { uploadCV, isAPIError, getErrorMessage } from '@/lib/api';
 import type { ResumeInfo } from '@/types';
 
 interface UseFileUploadProps {
@@ -60,15 +60,9 @@ export const useFileUpload = ({ sessionId, onCVUploaded }: UseFileUploadProps): 
           console.log('Clarification needed:', response.questions);
         }
         
-        // Update supervisor session with CV data
-        if (sessionId && response.cv_data) {
-          try {
-            await updateSessionCV(sessionId, response.cv_data);
-            onCVUploaded?.();
-          } catch (updateError) {
-            // Don't fail the upload if session update fails
-            console.warn('Failed to update supervisor session:', updateError);
-          }
+        // Notify parent component
+        if (response.cv_data) {
+          onCVUploaded?.();
         }
       } else {
         setUploadError(response.message || 'Failed to process CV');
