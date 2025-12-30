@@ -9,8 +9,7 @@ import { ChatContainer } from '@/components/Chat/ChatContainer';
 import { useTheme } from '@/hooks/useTheme';
 import { useFileUpload } from '@/hooks/useFileUpload';
 import { useJobInput } from '@/hooks/useJobInput';
-import { useSession } from '@/hooks/useSession';
-import { useChat } from '@/hooks/useChat';
+import { useWriterChat } from '@/hooks/useWriterChat';
 
 export default function Home() {
   const { isDark, toggleTheme } = useTheme();
@@ -19,15 +18,6 @@ export default function Home() {
   const [jobSkipped, setJobSkipped] = useState(false);
   const [analysisStarted, setAnalysisStarted] = useState(false);
   const [chatReady, setChatReady] = useState(false);
-  
-  // Initialize session
-  const {
-    sessionId,
-    sessionState,
-    isInitializing,
-    error: sessionError,
-    updateSessionState,
-  } = useSession();
   
   // File upload with backend integration
   const {
@@ -47,9 +37,9 @@ export default function Home() {
     handleRemoveFile,
     processUploadedFile,
   } = useFileUpload({ 
-    sessionId,
+    sessionId: null, // No longer needed - Writer chat creates its own session
     onCVUploaded: () => {
-      console.log('CV uploaded and supervisor notified');
+      console.log('CV uploaded successfully');
     }
   });
   
@@ -69,27 +59,30 @@ export default function Home() {
     clearError: clearJobError,
     clearJob,
   } = useJobInput({
-    sessionId,
+    sessionId: null, // No longer needed - Writer chat creates its own session
     onJobSubmitted: () => {
-      console.log('Job submitted and supervisor notified');
+      console.log('Job submitted successfully');
     }
   });
   
-  // Chat with supervisor agent
+  // Writer chat - Direct interaction with Writer agent
   const {
+    sessionId,
+    isInitializing,
+    sessionError,
     messages,
     inputText,
     setInputText,
     isLoading,
-    error: chatError,
+    chatError,
     textareaRef,
     messagesEndRef,
     handleSendMessage,
     handleKeyDown,
-  } = useChat({
-    sessionId,
+    initializeSession,
+  } = useWriterChat({
     cvData,
-    onSessionStateUpdate: updateSessionState,
+    jobData,
   });
 
   // Handlers for new functionality
@@ -116,6 +109,18 @@ export default function Home() {
       await submitJob();
     }
   };
+
+  // Initialize Writer chat when CV and optional job data are ready
+  useEffect(() => {
+    if (!analysisStarted || !cvData || sessionId) return;
+    
+    // Only initialize if we have CV data and (job is skipped or job data is ready)
+    const readyToChat = cvData && (jobSkipped || jobData);
+    
+    if (readyToChat) {
+      initializeSession();
+    }
+  }, [analysisStarted, cvData, jobData, jobSkipped, sessionId, initializeSession]);
 
   // Determine if analysis can be started
   // Can start if resume is uploaded and either job is skipped or valid job input is provided

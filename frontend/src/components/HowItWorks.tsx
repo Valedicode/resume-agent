@@ -25,7 +25,7 @@ const steps: StepData[] = [
     number: 3,
     title: 'Chat with AI to fine-tune',
     description:
-      'Our AI supervisor analyzes the gap between your resume and job requirements. Chat with the AI to refine your resume, request specific improvements, or ask for suggestions. The AI can transform your resume to be perfectly tailored to the job description.',
+      'Our AI Writer agent analyzes the gap between your resume and job requirements. Chat with the AI to refine your resume, request specific improvements, or ask for suggestions. The AI can transform your resume to be perfectly tailored to the job description.',
   },
   {
     number: 4,
