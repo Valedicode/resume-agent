@@ -1,10 +1,12 @@
-import { Message } from '@/types';
+import { Message, DownloadableFile } from '@/types';
+import { DownloadButton } from './DownloadButton';
 
 interface ChatMessageProps {
   message: Message;
+  generatedFiles?: DownloadableFile[] | null;
 }
 
-export const ChatMessage = ({ message }: ChatMessageProps) => {
+export const ChatMessage = ({ message, generatedFiles }: ChatMessageProps) => {
   // Simple markdown-like formatting for plain text
   // Converts ## headers, **text** to bold, *text* to italic, and preserves line breaks
   const formatText = (text: string) => {
@@ -104,6 +106,15 @@ export const ChatMessage = ({ message }: ChatMessageProps) => {
         <div className="text-sm leading-relaxed whitespace-pre-wrap">
           {formatText(message.content)}
         </div>
+        {message.role === 'assistant' && generatedFiles && generatedFiles.length > 0 && (
+          <div className="mt-3 pt-3 border-t border-slate-200 dark:border-slate-600">
+            <div className="space-y-2">
+              {generatedFiles.map((file, index) => (
+                <DownloadButton key={index} file={file} />
+              ))}
+            </div>
+          </div>
+        )}
       </div>
       {message.role === 'user' && (
         <div className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full bg-slate-200 dark:bg-slate-700">

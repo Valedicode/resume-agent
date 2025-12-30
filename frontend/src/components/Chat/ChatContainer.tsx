@@ -49,7 +49,11 @@ export const ChatContainer = ({
         <div className="mx-auto max-w-3xl">
           <div className="space-y-4">
             {messages.map((message) => (
-              <ChatMessage key={message.id} message={message} />
+              <ChatMessage 
+                key={message.id} 
+                message={message}
+                generatedFiles={message.generatedFiles}
+              />
             ))}
             
             {/* Loading indicator */}

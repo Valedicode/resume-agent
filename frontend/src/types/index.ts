@@ -7,6 +7,7 @@ export interface Message {
   role: 'user' | 'assistant';
   content: string;
   timestamp: Date;
+  generatedFiles?: DownloadableFile[] | null;
 }
 
 // ============================================
@@ -124,35 +125,6 @@ export interface GenerateCoverLetterResponse {
 }
 
 // ============================================
-// Supervisor Agent Types
-// ============================================
-
-export interface SupervisorSessionState {
-  session_stage: string;
-  has_cv_data: boolean;
-  has_job_data: boolean;
-  has_company_data: boolean;
-  needs_clarification: boolean;
-  ready_for_writer: boolean;
-  current_agent: string;
-}
-
-export interface SupervisorSessionResponse {
-  success: boolean;
-  assistant_message: string;
-  session_state?: SupervisorSessionState;
-  next_action?: string;
-  message: string;
-}
-
-export interface SupervisorSessionInitResponse {
-  success: boolean;
-  session_id: string;
-  welcome_message: string;
-  message: string;
-}
-
-// ============================================
 // Error Types
 // ============================================
 
@@ -165,11 +137,6 @@ export interface ErrorResponse {
 // ============================================
 // API Request Types
 // ============================================
-
-export interface SupervisorMessageRequest {
-  session_id: string;
-  user_input: string;
-}
 
 export interface JobURLRequest {
   urls: string[];
@@ -200,6 +167,54 @@ export interface GenerateCoverLetterRequest {
 
 export interface CompanyResearchRequest {
   company_name: string;
+}
+
+// ============================================
+// Writer Chat Types (New)
+// ============================================
+
+export interface WriterChatSessionInitRequest {
+  cv_data: ResumeInfo;
+  job_data?: JobRequirements;
+  mode: 'resume_refinement' | 'job_tailoring';
+}
+
+export interface WriterChatSessionInitResponse {
+  success: boolean;
+  session_id: string;
+  initial_message: string;
+  message: string;
+}
+
+export interface WriterChatMessageRequest {
+  session_id: string;
+  user_message: string;
+}
+
+export interface DownloadableFile {
+  filename: string;
+  file_type: string;
+  download_url: string;
+}
+
+export interface WriterChatMessageResponse {
+  success: boolean;
+  assistant_message: string;
+  requires_approval: boolean;
+  preview_content?: string | null;
+  generated_files?: DownloadableFile[] | null;
+  message: string;
+}
+
+export interface ResumeSummaryRequest {
+  cv_data: ResumeInfo;
+}
+
+export interface ResumeSummaryResponse {
+  success: boolean;
+  summary: string;
+  suggestions?: string[] | null;
+  message: string;
 }
 
 // ============================================

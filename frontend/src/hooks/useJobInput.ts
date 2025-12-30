@@ -3,7 +3,7 @@
  */
 
 import { useState, useCallback, useEffect } from 'react';
-import { extractJobFromURL, extractJobFromText, updateSessionJob, getErrorMessage } from '@/lib/api';
+import { extractJobFromURL, extractJobFromText, getErrorMessage } from '@/lib/api';
 import type { JobRequirements } from '@/types';
 
 interface UseJobInputProps {
@@ -110,16 +110,8 @@ export const useJobInput = ({ sessionId, onJobSubmitted }: UseJobInputProps): Us
       if (response.success && response.job_data) {
         setJobData(response.job_data);
         
-        // Update supervisor session with job data
-        if (sessionId) {
-          try {
-            await updateSessionJob(sessionId, response.job_data);
-            onJobSubmitted?.();
-          } catch (updateError) {
-            // Don't fail the submission if session update fails
-            console.warn('Failed to update supervisor session:', updateError);
-          }
-        }
+        // Notify parent component
+        onJobSubmitted?.();
       } else {
         setError(response.message || 'Failed to process job information');
       }

@@ -470,7 +470,7 @@ def generate_cv_pdf(html_content: str, output_filename: str, applicant_name: str
     Example:
         >>> result = generate_cv_pdf(html, "john_doe_cv.pdf", "John Doe")
         >>> print(result)
-        "CV PDF generated successfully at: /path/to/backend/data/john_doe_cv.pdf"
+        "CV PDF generated successfully! The file 'john_doe_cv.pdf' is ready for download."
     """
     try:
         # Import WeasyPrint (lazy loading)
@@ -501,7 +501,9 @@ def generate_cv_pdf(html_content: str, output_filename: str, applicant_name: str
             stylesheets=[CSS(string=CV_CSS_TEMPLATE)]
         )
         
-        return f"CV PDF generated successfully at: {output_path}"
+        # Return user-friendly message without exposing server path
+        # Filename is included for backend detection (will be improved with tool tracking)
+        return f"CV PDF generated successfully! The file '{output_filename}' is ready for download."
         
     except RuntimeError as e:
         # WeasyPrint not available
@@ -516,31 +518,48 @@ def generate_cover_letter_pdf(content_json: str, output_filename: str, applicant
     
     Creates a simple, professional cover letter PDF with proper business letter formatting.
     
+    WARNING: Only call this tool after the user has explicitly approved the cover letter content!
+    
     Args:
-        content_json: CoverLetterContent JSON from generate_cover_letter_content
-        output_filename: Filename for the PDF (e.g., "kevin_ha_cover_letter.pdf")
-        applicant_name: Full name of the applicant
-        applicant_contact: Contact information (email, phone, address)
-        recipient_info: Who the letter is addressed to (default: "Hiring Manager")
+        content_json: CoverLetterContent JSON from generate_cover_letter_content (the JSON string output from that tool)
+        output_filename: Filename for the PDF (e.g., "john_doe_cover_letter.pdf")
+        applicant_name: Full name from CV data - extract from cv_data['name'] or cv_data['full_name']
+        applicant_contact: Contact info formatted as "email | phone" - construct from cv_data['email'] and cv_data['phone']
+        recipient_info: Who to address (default: "Hiring Manager") - can extract from job_data if specified
         
     Returns:
-        Success message with the full path to the generated PDF file
+        Success message indicating the PDF was generated (filename included for backend detection)
         
     Example:
+        >>> # Get CV data from system context
+        >>> name = cv_data['name']  # or cv_data['full_name']
+        >>> email = cv_data.get('email', 'email@example.com')
+        >>> phone = cv_data.get('phone', '')
+        >>> contact = f"{email} | {phone}" if phone else email
+        >>> 
         >>> result = generate_cover_letter_pdf(
-        ...     content_json, 
-        ...     "cover_letter.pdf",
-        ...     "John Doe",
-        ...     "john@email.com | (123) 456-7890",
-        ...     "Ms. Sarah Johnson, Hiring Manager"
+        ...     content_json=cover_letter_json_output,
+        ...     output_filename="john_doe_cover_letter.pdf",
+        ...     applicant_name=name,
+        ...     applicant_contact=contact,
+        ...     recipient_info="Hiring Manager"
         ... )
     """
     try:
         # Import WeasyPrint (lazy loading)
         HTML, CSS = _import_weasyprint()
         
-        # Parse content
-        content = json.loads(content_json)
+        # Parse content with better error handling
+        try:
+            content = json.loads(content_json)
+        except json.JSONDecodeError as e:
+            return f"Error: Invalid JSON format for cover letter content. {str(e)}"
+        
+        # Validate required fields
+        required_fields = ['opening_paragraph', 'body_paragraph_1', 'body_paragraph_2', 'closing_paragraph']
+        missing_fields = [field for field in required_fields if field not in content]
+        if missing_fields:
+            return f"Error: Cover letter content is missing required fields: {', '.join(missing_fields)}"
         
         # Ensure output directory exists
         output_dir = DEFAULT_OUTPUT_DIR
@@ -605,7 +624,9 @@ def generate_cover_letter_pdf(content_json: str, output_filename: str, applicant
             stylesheets=[CSS(string=COVER_LETTER_CSS_TEMPLATE)]
         )
         
-        return f"Cover letter PDF generated successfully at: {output_path}"
+        # Return user-friendly message without exposing server path
+        # Filename is included for backend detection (will be improved with tool tracking)
+        return f"Cover letter PDF generated successfully! The file '{output_filename}' is ready for download."
         
     except RuntimeError as e:
         # WeasyPrint not available
@@ -661,11 +682,16 @@ YOUR WORKFLOW (FOLLOW THIS SEQUENCE):
    - Use appropriate filename (e.g., "firstname_lastname_cv_tailored.pdf")
 
 4. COVER LETTER PHASE (if requested):
-   - Call generate_cover_letter_content
+   - Call generate_cover_letter_content with CV, job, and company data
    - SHOW the cover letter content to the user
    - Ask for feedback or approval
    - ONLY call generate_cover_letter_pdf after EXPLICIT approval
-   - Use appropriate filename (e.g., "firstname_lastname_cover_letter.pdf")
+   - When calling generate_cover_letter_pdf, you MUST provide:
+     * content_json: The output from generate_cover_letter_content
+     * output_filename: e.g., "firstname_lastname_cover_letter.pdf"
+     * applicant_name: Extract from CV data (e.g., cv_data['name'])
+     * applicant_contact: Format as "email | phone" from CV data (e.g., "john@email.com | (123) 456-7890")
+     * recipient_info: Extract from job data or use "Hiring Manager"
 
 CRITICAL PRINCIPLES:
 ALWAYS show changes before generating PDFs
@@ -690,6 +716,20 @@ INTERACTION STYLE:
 - Avoid complex markdown structure (no ### or deeper headers, no - lists, no code blocks)
 - You may use simple formatting: ## for section headers, **bold** for emphasis, and *italic* for subtle emphasis
 - Format responses with simple line breaks and plain text structure
+
+**CRITICAL - File Downloads:**
+- When you call generate_cv_pdf or generate_cover_letter_pdf tools, they return a success message
+- You MUST include this EXACT success message in your response to the user
+- DO NOT paraphrase or reword the tool's success message - copy it verbatim
+- The success message contains the filename which is needed for the download system to work
+- DO NOT create markdown links like [Download](sandbox:/filename.pdf) or [Download](file://filename.pdf)
+- DO NOT create any file://, sandbox:/, or other file links - they don't work
+- The user interface will AUTOMATICALLY display a download button when it detects the tool's success message
+- You can add additional text before or after the tool message, but the tool's exact message MUST be included
+
+Example:
+- Tool returns: "CV PDF generated successfully! The file 'john_doe_cv.pdf' is ready for download."
+- Your response should include this EXACT text, like: "Great! CV PDF generated successfully! The file 'john_doe_cv.pdf' is ready for download. If you need anything else, let me know!"
 
 Remember: You are an assistant helping the user create their best application materials. 
 The user is the expert on their own experience - you're the expert on presentation."""
