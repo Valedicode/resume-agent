@@ -20,9 +20,12 @@ import {
   GenerateTailoredCVResponse,
   GenerateCoverLetterRequest,
   GenerateCoverLetterResponse,
-  SupervisorSessionInitResponse,
-  SupervisorSessionResponse,
-  SupervisorMessageRequest,
+  WriterChatSessionInitRequest,
+  WriterChatSessionInitResponse,
+  WriterChatMessageRequest,
+  WriterChatMessageResponse,
+  ResumeSummaryRequest,
+  ResumeSummaryResponse,
   ErrorResponse,
 } from '@/types';
 
@@ -246,30 +249,20 @@ export async function generateCoverLetter(
 }
 
 // ============================================
-// Supervisor Agent API
+// Writer Chat API (New)
 // ============================================
 
 /**
- * Start a new supervisor session
+ * Start a new Writer chat session
  */
-export async function startSupervisorSession(): Promise<SupervisorSessionInitResponse> {
-  return apiFetch<SupervisorSessionInitResponse>('/supervisor/session/start', {
-    method: 'POST',
-  });
-}
-
-/**
- * Send message to supervisor agent
- */
-export async function sendSupervisorMessage(
-  request: SupervisorMessageRequest
-): Promise<SupervisorSessionResponse> {
+export async function startWriterChat(
+  request: WriterChatSessionInitRequest
+): Promise<WriterChatSessionInitResponse> {
   try {
-    // Use AbortController for timeout handling
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 300000); // 5 minutes timeout
+    const timeoutId = setTimeout(() => controller.abort(), 300000); // 5 minutes
 
-    const response = await fetch(`${API_BASE_URL}/supervisor/session/message`, {
+    const response = await fetch(`${API_BASE_URL}/writer/chat/start`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -283,7 +276,7 @@ export async function sendSupervisorMessage(
     if (!response.ok) {
       const errorData = await response.json().catch(() => ({}));
       throw new APIError(
-        errorData.detail || errorData.error || 'API request failed',
+        errorData.detail || errorData.error || 'Failed to start Writer chat',
         response.status,
         errorData.detail
       );
@@ -294,16 +287,14 @@ export async function sendSupervisorMessage(
     if (error instanceof APIError) {
       throw error;
     }
-    // AbortController timeout
     if (error instanceof Error && error.name === 'AbortError') {
       throw new APIError(
-        'Request timed out. The backend is taking too long to process. Please try again.',
+        'Request timed out. Please try again.',
         0,
         'Request timeout'
       );
     }
-    // Network errors or connection reset
-    if (error instanceof TypeError || (error instanceof Error && (error.message.includes('fetch') || error.message.includes('ECONNRESET') || error.message.includes('socket')))) {
+    if (error instanceof TypeError || (error instanceof Error && (error.message.includes('fetch') || error.message.includes('ECONNRESET')))) {
       throw new APIError(
         'Cannot connect to backend server. Please ensure the backend is running at http://localhost:8000',
         0,
@@ -318,39 +309,70 @@ export async function sendSupervisorMessage(
 }
 
 /**
- * Update supervisor session with CV data
+ * Send message to Writer agent
  */
-export async function updateSessionCV(
-  sessionId: string,
-  cvData: any
-): Promise<{ success: boolean; message: string }> {
-  return apiFetch(`/supervisor/session/${sessionId}/cv`, {
-    method: 'POST',
-    body: JSON.stringify(cvData),
-  });
+export async function sendWriterMessage(
+  request: WriterChatMessageRequest
+): Promise<WriterChatMessageResponse> {
+  try {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 300000); // 5 minutes
+
+    const response = await fetch(`${API_BASE_URL}/writer/chat/message`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(request),
+      signal: controller.signal,
+    });
+
+    clearTimeout(timeoutId);
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      throw new APIError(
+        errorData.detail || errorData.error || 'Failed to send message',
+        response.status,
+        errorData.detail
+      );
+    }
+
+    return await response.json();
+  } catch (error) {
+    if (error instanceof APIError) {
+      throw error;
+    }
+    if (error instanceof Error && error.name === 'AbortError') {
+      throw new APIError(
+        'Request timed out. Please try again.',
+        0,
+        'Request timeout'
+      );
+    }
+    if (error instanceof TypeError || (error instanceof Error && (error.message.includes('fetch') || error.message.includes('ECONNRESET')))) {
+      throw new APIError(
+        'Cannot connect to backend server. Please ensure the backend is running at http://localhost:8000',
+        0,
+        'Network connection failed'
+      );
+    }
+    throw new APIError(
+      error instanceof Error ? error.message : 'Request failed',
+      0
+    );
+  }
 }
 
 /**
- * Update supervisor session with job data
+ * Generate resume summary
  */
-export async function updateSessionJob(
-  sessionId: string,
-  jobData: any
-): Promise<{ success: boolean; message: string; ready_for_writer?: boolean }> {
-  return apiFetch(`/supervisor/session/${sessionId}/job`, {
+export async function generateResumeSummary(
+  request: ResumeSummaryRequest
+): Promise<ResumeSummaryResponse> {
+  return apiFetch<ResumeSummaryResponse>('/writer/summarize-resume', {
     method: 'POST',
-    body: JSON.stringify(jobData),
-  });
-}
-
-/**
- * Get current session state
- */
-export async function getSupervisorSessionState(
-  sessionId: string
-): Promise<any> {
-  return apiFetch<any>(`/supervisor/session/${sessionId}/state`, {
-    method: 'GET',
+    body: JSON.stringify(request),
   });
 }
 
