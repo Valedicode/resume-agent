@@ -223,7 +223,9 @@ export const AudioRecorder = ({
       const response = await translateAudio(request);
 
       if (response.success && response.text) {
-        setTranscription(response.text);
+        // Trim to remove trailing newlines
+        const cleanedText = response.text.trimEnd();
+        setTranscription(cleanedText);
         setRecordingState('completed');
         if (onTranscriptionResult) {
           onTranscriptionResult(response, selectedMode, selectedModel);

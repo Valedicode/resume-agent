@@ -177,11 +177,16 @@ export const ChatInput = ({
       const response = await translateAudio(request);
 
       if (response.success && response.text) {
-        // Insert into text input
-        onInputChange(response.text);
-        // Focus textarea
+        // Insert into text input (trim to remove trailing newlines)
+        const cleanedText = response.text.trimEnd();
+        onInputChange(cleanedText);
+        // Focus textarea and move cursor to end
         setTimeout(() => {
-          textareaRef.current?.focus();
+          if (textareaRef.current) {
+            textareaRef.current.focus();
+            const length = cleanedText.length;
+            textareaRef.current.setSelectionRange(length, length);
+          }
         }, 100);
       } else {
         throw new Error(response.message || 'Translation failed');
