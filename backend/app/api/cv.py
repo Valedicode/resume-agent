@@ -70,6 +70,13 @@ async def upload_cv(file: UploadFile = File(...)):
     - Faster and more secure than disk-based processing
     """
     try:
+        # Validate filename exists
+        if not file.filename:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Filename is required. Please upload a file with a valid filename."
+            )
+        
         # Validate file type
         if not file.filename.lower().endswith('.pdf'):
             raise HTTPException(

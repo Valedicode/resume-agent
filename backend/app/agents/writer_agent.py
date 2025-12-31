@@ -40,6 +40,7 @@ from langchain_openai import ChatOpenAI
 from langchain_core.prompts import ChatPromptTemplate
 from pathlib import Path
 import json
+import html
 import dotenv
 
 # Import models from centralized schemas
@@ -454,11 +455,13 @@ def generate_cv_pdf(html_content: str, output_filename: str, applicant_name: str
         output_path = output_dir / output_filename
         
         # Build complete HTML document
+        # Escape applicant_name to prevent HTML injection
+        escaped_name = html.escape(applicant_name)
         full_html = f"""<!DOCTYPE html>
         <html>
         <head>
             <meta charset="utf-8">
-            <title>{applicant_name} - CV</title>
+            <title>{escaped_name} - CV</title>
         </head>
         <body>
         {html_content}
@@ -548,24 +551,30 @@ def generate_cover_letter_pdf(content_json: str, output_filename: str, applicant
             paragraphs.append(content['body_paragraph_3'])
         paragraphs.append(content['closing_paragraph'])
         
-        # Generate paragraph HTML
-        paragraphs_html = '\n'.join([f'<p>{p}</p>' for p in paragraphs])
+        # Generate paragraph HTML with proper escaping
+        # Escape all paragraphs to prevent HTML injection
+        paragraphs_html = '\n'.join([f'<p>{html.escape(p)}</p>' for p in paragraphs])
         
         # Get current date
         from datetime import datetime
         current_date = datetime.now().strftime("%B %d, %Y")
+        
+        # Escape user-provided data to prevent HTML injection
+        escaped_name = html.escape(applicant_name)
+        escaped_contact = html.escape(applicant_contact)
+        escaped_recipient = html.escape(recipient_info)
         
         # Build complete HTML
         full_html = f"""<!DOCTYPE html>
         <html>
         <head>
             <meta charset="utf-8">
-            <title>Cover Letter - {applicant_name}</title>
+            <title>Cover Letter - {escaped_name}</title>
         </head>
         <body>
             <div class="header">
-                <strong>{applicant_name}</strong><br>
-                {applicant_contact}
+                <strong>{escaped_name}</strong><br>
+                {escaped_contact}
             </div>
             
             <div class="date">
@@ -573,7 +582,7 @@ def generate_cover_letter_pdf(content_json: str, output_filename: str, applicant
             </div>
             
             <div class="greeting">
-                Dear {recipient_info},
+                Dear {escaped_recipient},
             </div>
             
             {paragraphs_html}
@@ -583,7 +592,7 @@ def generate_cover_letter_pdf(content_json: str, output_filename: str, applicant
             </div>
             
             <div class="signature">
-                {applicant_name}
+                {escaped_name}
             </div>
         </body>
         </html>"""
