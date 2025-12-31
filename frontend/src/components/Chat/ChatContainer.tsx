@@ -5,6 +5,7 @@ import { EmptyState } from './EmptyState';
 
 interface ChatContainerProps {
   messages: Message[];
+  fadingOutMessageId?: string | null;
   inputText: string;
   isLoading: boolean;
   textareaRef: React.RefObject<HTMLTextAreaElement | null>;
@@ -18,6 +19,7 @@ interface ChatContainerProps {
 
 export const ChatContainer = ({
   messages,
+  fadingOutMessageId,
   inputText,
   isLoading,
   textareaRef,
@@ -43,7 +45,7 @@ export const ChatContainer = ({
   }
 
   return (
-    <div className="flex flex-1 flex-col rounded-xl border border-slate-200 bg-white shadow-sm dark:border-slate-700 dark:bg-slate-800">
+    <div className="flex flex-1 flex-col rounded-xl border border-slate-200 bg-white shadow-sm dark:border-slate-700 dark:bg-slate-800 animate-fade-in">
       {/* Chat Messages Area */}
       <div className="flex-1 overflow-y-auto p-6">
         <div className="mx-auto max-w-3xl">
@@ -53,6 +55,7 @@ export const ChatContainer = ({
                 key={message.id} 
                 message={message}
                 generatedFiles={message.generatedFiles}
+                isFadingOut={fadingOutMessageId === message.id}
               />
             ))}
             

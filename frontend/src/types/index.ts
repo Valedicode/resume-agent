@@ -189,6 +189,8 @@ export interface WriterChatSessionInitResponse {
   success: boolean;
   session_id: string;
   initial_message: string;
+  greeting_message?: string;
+  summary_message?: string;
   message: string;
 }
 

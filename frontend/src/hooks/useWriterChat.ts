@@ -21,6 +21,7 @@ interface UseWriterChatReturn {
   
   // Chat state
   messages: Message[];
+  fadingOutMessageId: string | null;
   inputText: string;
   setInputText: (text: string) => void;
   isLoading: boolean;
@@ -50,6 +51,7 @@ export const useWriterChat = ({
   
   // Chat state
   const [messages, setMessages] = useState<Message[]>([]);
+  const [fadingOutMessageId, setFadingOutMessageId] = useState<string | null>(null);
   const [inputText, setInputText] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [chatError, setChatError] = useState<string | null>(null);
@@ -95,15 +97,41 @@ export const useWriterChat = ({
       if (response.success) {
         setSessionId(response.session_id);
         
-        // Add initial message from Writer agent
-        const initialMessage: Message = {
-          id: Date.now().toString(),
-          role: 'assistant',
-          content: response.initial_message,
-          timestamp: new Date(),
-        };
-        
-        setMessages([initialMessage]);
+        // Handle separate greeting and summary messages for smooth transition
+        if (response.greeting_message && response.summary_message) {
+          // First show greeting message
+          const greetingMessage: Message = {
+            id: `greeting-${Date.now()}`,
+            role: 'assistant',
+            content: response.greeting_message,
+            timestamp: new Date(),
+          };
+          
+          setMessages([greetingMessage]);
+          
+          // After 2.5 seconds, add summary message (keep greeting)
+          setTimeout(() => {
+            const summaryMessage: Message = {
+              id: `summary-${Date.now()}`,
+              role: 'assistant',
+              content: response.summary_message!,
+              timestamp: new Date(),
+            };
+            
+            // Add summary message while keeping greeting
+            setMessages((prev) => [...prev, summaryMessage]);
+          }, 2500);
+        } else {
+          // Fallback to combined message if separate messages not available
+          const initialMessage: Message = {
+            id: Date.now().toString(),
+            role: 'assistant',
+            content: response.initial_message,
+            timestamp: new Date(),
+          };
+          
+          setMessages([initialMessage]);
+        }
       } else {
         setSessionError('Failed to initialize Writer chat session');
       }
@@ -208,6 +236,7 @@ export const useWriterChat = ({
   const resetSession = useCallback(() => {
     setSessionId(null);
     setMessages([]);
+    setFadingOutMessageId(null);
     setSessionError(null);
     setChatError(null);
     setInputText('');
@@ -221,6 +250,7 @@ export const useWriterChat = ({
     
     // Chat state
     messages,
+    fadingOutMessageId,
     inputText,
     setInputText,
     isLoading,

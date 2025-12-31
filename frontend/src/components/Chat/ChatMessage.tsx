@@ -4,9 +4,10 @@ import { DownloadButton } from './DownloadButton';
 interface ChatMessageProps {
   message: Message;
   generatedFiles?: DownloadableFile[] | null;
+  isFadingOut?: boolean;
 }
 
-export const ChatMessage = ({ message, generatedFiles }: ChatMessageProps) => {
+export const ChatMessage = ({ message, generatedFiles, isFadingOut = false }: ChatMessageProps) => {
   // Simple markdown-like formatting for plain text
   // Converts ## headers, **text** to bold, *text* to italic, [text](url) to links, and preserves line breaks
   const formatText = (text: string) => {
@@ -157,9 +158,9 @@ export const ChatMessage = ({ message, generatedFiles }: ChatMessageProps) => {
 
   return (
     <div
-      className={`flex gap-4 ${
+      className={`flex gap-4 transition-opacity duration-500 ${
         message.role === 'user' ? 'justify-end' : 'justify-start'
-      }`}
+      } ${isFadingOut ? 'opacity-0' : 'opacity-100 animate-fade-in'}`}
     >
       {message.role === 'assistant' && (
         <div className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-indigo-600 to-blue-600 dark:from-indigo-500 dark:to-blue-500">
