@@ -181,7 +181,7 @@ export const ChatMessage = ({ message, generatedFiles, isFadingOut = false }: Ch
         </div>
         {message.role === 'assistant' && generatedFiles && generatedFiles.length > 0 && (
           <div className="mt-3 pt-3 border-t border-slate-200 dark:border-slate-600">
-            <div className="space-y-2">
+            <div className="flex flex-wrap gap-4">
               {generatedFiles.map((file, index) => (
                 <DownloadButton key={index} file={file} />
               ))}
