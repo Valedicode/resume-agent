@@ -6,6 +6,7 @@ Supports multiple session types (writer, supervisor, future agents).
 """
 
 import uuid
+import threading
 from typing import Dict, Any, Optional, List
 from datetime import timedelta
 
@@ -231,6 +232,8 @@ class GenericSessionManager:
 
 # Global manager instance
 _session_manager: Optional[GenericSessionManager] = None
+# Lock for thread-safe initialization
+_session_manager_lock = threading.Lock()
 
 
 def get_session_manager() -> GenericSessionManager:
@@ -240,16 +243,25 @@ def get_session_manager() -> GenericSessionManager:
     Uses dependency injection pattern for FastAPI.
     Creates manager with in-memory storage by default.
     
+    Thread-safe: Uses double-checked locking pattern to ensure
+    only one manager instance is created even under concurrent access.
+    
     Returns:
         GenericSessionManager singleton
     """
     global _session_manager
     
+    # First check (fast path - no lock needed if already initialized)
     if _session_manager is None:
-        # Default: in-memory storage for development
-        from app.services.memory_storage import MemorySessionStorage
-        storage = MemorySessionStorage()
-        _session_manager = GenericSessionManager(storage, ttl_minutes=60)
+        # Acquire lock for thread-safe initialization
+        with _session_manager_lock:
+            # Second check (double-checked locking pattern)
+            # Another thread might have initialized it while we waited for the lock
+            if _session_manager is None:
+                # Default: in-memory storage for development
+                from app.services.memory_storage import MemorySessionStorage
+                storage = MemorySessionStorage()
+                _session_manager = GenericSessionManager(storage, ttl_minutes=60)
     
     return _session_manager
 
@@ -257,9 +269,12 @@ def get_session_manager() -> GenericSessionManager:
 def reset_session_manager():
     """
     Reset the session manager (useful for testing).
+    
+    Thread-safe: Uses lock to prevent race conditions during reset.
     """
     global _session_manager
-    _session_manager = None
+    with _session_manager_lock:
+        _session_manager = None
 
 
 def configure_session_manager(storage: SessionStorage, ttl_minutes: int = 60):
@@ -274,10 +289,13 @@ def configure_session_manager(storage: SessionStorage, ttl_minutes: int = 60):
         configure_session_manager(db_storage, ttl_minutes=120)
     ```
     
+    Thread-safe: Uses lock to prevent race conditions during configuration.
+    
     Args:
         storage: Storage backend implementation
         ttl_minutes: Session time-to-live
     """
     global _session_manager
-    _session_manager = GenericSessionManager(storage, ttl_minutes)
+    with _session_manager_lock:
+        _session_manager = GenericSessionManager(storage, ttl_minutes)
 
