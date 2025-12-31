@@ -34,6 +34,8 @@ from app.agents.writer_agent import (
     generate_cover_letter_content,
     generate_cv_pdf,
     generate_cover_letter_pdf,
+    generate_cv_docx,
+    generate_cover_letter_docx,
     agent as writer_agent
 )
 from app.services.generic_session_manager import (
@@ -885,20 +887,23 @@ Be conversational, helpful, and professional."""
             generated_files = []
             import re
             
-            # Look for PDF generation success messages
+            # Look for PDF and Word document generation success messages
             # Updated to match new format: "CV PDF generated successfully! The file 'filename.pdf' is ready for download."
-            pdf_patterns = [
+            # Also matches: "CV Word document generated successfully! The file 'filename.docx' is ready for download."
+            document_patterns = [
                 r"CV PDF generated successfully! The file '([^']+\.pdf)'",
                 r"Cover letter PDF generated successfully! The file '([^']+\.pdf)'",
+                r"CV Word document generated successfully! The file '([^']+\.docx)'",
+                r"Cover letter Word document generated successfully! The file '([^']+\.docx)'",
                 r"PDF generated successfully! The file '([^']+\.pdf)'",
                 # Fallback patterns for backward compatibility (if old format still exists)
-                r"generated successfully at: .*/([^/\n]+\.pdf)"
+                r"generated successfully at: .*/([^/\n]+\.(?:pdf|docx))"
             ]
             
             # Track seen filenames to avoid duplicates
             seen_filenames = set()
             
-            for pattern in pdf_patterns:
+            for pattern in document_patterns:
                 matches = re.findall(pattern, assistant_message)
                 for filename in matches:
                     # Skip if we've already added this filename
@@ -908,7 +913,16 @@ Be conversational, helpful, and professional."""
                     seen_filenames.add(filename)
                     
                     # Determine file type from filename
-                    file_type = "cover_letter" if "cover" in filename.lower() else "cv"
+                    # The frontend DownloadButton checks both file_type and filename extension
+                    # So we can use "docx" for Word files and "cv"/"cover_letter" for PDFs
+                    if filename.lower().endswith('.docx'):
+                        # Word document - use "docx" as file_type
+                        # Frontend will detect it's Word from .docx extension
+                        file_type = "docx"
+                    elif "cover" in filename.lower():
+                        file_type = "cover_letter"
+                    else:
+                        file_type = "cv"
                     
                     generated_files.append(GeneratedFile(
                         filename=filename,
