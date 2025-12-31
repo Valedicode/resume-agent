@@ -246,6 +246,8 @@ class WriterChatSessionInitResponse(BaseModel):
     success: bool
     session_id: str = Field(description="Session ID for subsequent chat messages")
     initial_message: str = Field(description="Writer's initial greeting/summary")
+    greeting_message: Optional[str] = Field(default=None, description="Separate greeting message")
+    summary_message: Optional[str] = Field(default=None, description="Separate summary message")
     message: str = Field(description="Status message")
 
 

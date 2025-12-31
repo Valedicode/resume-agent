@@ -665,29 +665,54 @@ async def start_writer_chat(
             # Generate resume summary
             cv_json = json.dumps(request.cv_data)
             
-            # Create initial context for Writer agent
-            initial_prompt = f"""I have received the following resume data:
+            # Generate greeting message
+            greeting_prompt = """Please provide a friendly greeting introducing yourself as a resume optimization expert. Then explain that you will provide a summary of the extracted resume information so we can verify that all information was correctly extracted. Keep it brief and welcoming."""
+            
+            greeting_result = writer_agent.invoke({
+                "messages": [
+                    {"role": "system", "content": RESUME_REFINEMENT_SYSTEM_PROMPT},
+                    {"role": "user", "content": greeting_prompt}
+                ]
+            })
+            
+            greeting_message = greeting_result["messages"][-1].content
+            
+            # Generate summary message
+            summary_prompt = f"""I have received the following resume data:
 
 {cv_json}
 
 Please provide a neutral summary of this resume. Present the information in this EXACT order: Header (name, contact details), Education, Experience, Leadership & Activities (if present), Skills, Projects. Include ALL sections that are present. After the summary, ask if I'd like to proceed with the systematic refinement process."""
             
-            # Invoke Writer agent with comprehensive resume refinement prompt
-            result = writer_agent.invoke({
+            summary_result = writer_agent.invoke({
                 "messages": [
                     {"role": "system", "content": RESUME_REFINEMENT_SYSTEM_PROMPT},
-                    {"role": "user", "content": initial_prompt}
+                    {"role": "user", "content": summary_prompt}
                 ]
             })
             
-            initial_message = result["messages"][-1].content
+            summary_message = summary_result["messages"][-1].content
+            initial_message = f"{greeting_message}\n\n{summary_message}"
             
         else:  # job_tailoring
             # Generate job alignment preview
             cv_json = json.dumps(request.cv_data)
             job_json = json.dumps(request.job_data)
             
-            initial_prompt = f"""I have both resume and job data ready for tailoring.
+            # Generate greeting message
+            greeting_prompt = """Please provide a friendly greeting introducing yourself as a resume optimization expert specializing in job-specific tailoring. Then explain that you will provide a summary of the extracted resume information and an overview of how well it matches the job requirements, so we can verify that all information was correctly extracted. Keep it brief and welcoming."""
+            
+            greeting_result = writer_agent.invoke({
+                "messages": [
+                    {"role": "system", "content": "You are helping with job-specific resume tailoring. Provide an overview of the match."},
+                    {"role": "user", "content": greeting_prompt}
+                ]
+            })
+            
+            greeting_message = greeting_result["messages"][-1].content
+            
+            # Generate summary message
+            summary_prompt = f"""I have both resume and job data ready for tailoring.
 
 Resume: {cv_json}
 
@@ -695,22 +720,26 @@ Job: {job_json}
 
 Please provide a brief overview of how well the resume matches the job requirements, and what we'll do to tailor it."""
             
-            result = writer_agent.invoke({
+            summary_result = writer_agent.invoke({
                 "messages": [
                     {"role": "system", "content": "You are helping with job-specific resume tailoring. Provide an overview of the match."},
-                    {"role": "user", "content": initial_prompt}
+                    {"role": "user", "content": summary_prompt}
                 ]
             })
             
-            initial_message = result["messages"][-1].content
+            summary_message = summary_result["messages"][-1].content
+            initial_message = f"{greeting_message}\n\n{summary_message}"
         
-        # Store initial exchange in session
-        session_manager.add_message(session_id, "assistant", initial_message)
+        # Store initial exchange in session (store both messages)
+        session_manager.add_message(session_id, "assistant", greeting_message)
+        session_manager.add_message(session_id, "assistant", summary_message)
         
         return WriterChatSessionInitResponse(
             success=True,
             session_id=session_id,
-            initial_message=initial_message,
+            initial_message=initial_message,  # Keep for backward compatibility
+            greeting_message=greeting_message,
+            summary_message=summary_message,
             message="Writer chat session started successfully"
         )
         
