@@ -20,7 +20,7 @@ Tools:
 - update_resume_with_clarifications: Update tool (incorporates user answers)
 
 Data Model:
-- ResumeInfo: Pydantic model defining resume structure (name, email, phone, skills, education, experience, projects)
+- ResumeInfo: Pydantic model defining resume structure (name, email, phone, location, github_url, linkedin_url, portfolio_url, skills, education, experience, projects, leadership_activities)
 """
 
 from langchain.agents import create_agent
@@ -53,8 +53,9 @@ def extract_resume_info(pdf_path: str = "", pdf_bytes: bytes = b"") -> str:
             pdf_bytes: PDF file content as bytes (preferred method)
             
         Returns:
-            JSON string with extracted resume information including name, 
-            skills, education, experience, projects, contact info, etc.
+            JSON string with extracted resume information including name, email, phone, location,
+            github_url, linkedin_url, portfolio_url, skills, education, experience, projects, 
+            leadership_activities, and other contact details.
     """
     # Extract text from PDF
     text = ""
@@ -81,7 +82,9 @@ def extract_resume_info(pdf_path: str = "", pdf_bytes: bytes = b"") -> str:
     structured_llm = llm.with_structured_output(ResumeInfo)
 
     prompt = ChatPromptTemplate.from_messages([
-        ("system", "Extract all information from the resume text. Be thorough and capture all details."),
+        ("system", "Extract all information from the resume text. Be thorough and capture all details. "
+         "Include: contact information (email, phone, location), professional links (GitHub, LinkedIn, portfolio/website URLs), "
+         "leadership roles, extracurricular activities, volunteer work, or other relevant activities in the leadership_activities field if present."),
         ("user", "{text}")
     ])
 

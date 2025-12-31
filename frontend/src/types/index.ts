@@ -18,9 +18,15 @@ export interface ResumeInfo {
   name: string;
   email: string;
   phone: string;
+  location?: string;
+  github_url?: string;
+  linkedin_url?: string;
+  portfolio_url?: string;
   skills: string[];
   education: string[];
   experience: string[];
+  projects?: string[];
+  leadership_activities?: string[];
 }
 
 export interface CVExtractionResponse {

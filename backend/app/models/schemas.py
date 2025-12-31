@@ -27,10 +27,30 @@ class ResumeInfo(BaseModel):
     name: str = Field(description="Full name of the applicant")
     email: str = Field(description="Email address")
     phone: str = Field(description="Phone number")
+    location: Optional[str] = Field(
+        default=None,
+        description="Location (city, state, country, or full address)"
+    )
+    github_url: Optional[str] = Field(
+        default=None,
+        description="GitHub profile URL"
+    )
+    linkedin_url: Optional[str] = Field(
+        default=None,
+        description="LinkedIn profile URL"
+    )
+    portfolio_url: Optional[str] = Field(
+        default=None,
+        description="Personal portfolio or website URL"
+    )
     skills: List[str] = Field(description="List of professional skills")
     education: List[str] = Field(description="Educational qualifications")
     experience: List[str] = Field(description="Work experience entries")
     projects: List[str] = Field(description="List of projects the applicant has worked on")
+    leadership_activities: Optional[List[str]] = Field(
+        default=[],
+        description="Leadership roles, extracurricular activities, volunteer work, or other relevant activities"
+    )
 
 
 class CVExtractionResponse(BaseModel):

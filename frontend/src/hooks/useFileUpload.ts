@@ -70,14 +70,26 @@ export const useFileUpload = ({ sessionId, onCVUploaded }: UseFileUploadProps): 
     } catch (error) {
       const errorMessage = getErrorMessage(error);
       setUploadError(errorMessage);
-      console.error('CV upload error:', {
-        error,
-        message: errorMessage,
-        file: {
-          name: file.name,
-          size: file.size,
-          type: file.type
-        }
+      
+      // Log error with multiple formats for better debugging
+      console.error('CV upload error - Message:', errorMessage);
+      console.error('CV upload error - Raw error:', error);
+      console.error('CV upload error - Error type:', error instanceof Error ? error.constructor.name : typeof error);
+      
+      if (error instanceof Error) {
+        console.error('CV upload error - Error name:', error.name);
+        console.error('CV upload error - Error stack:', error.stack);
+      }
+      
+      if (isAPIError(error)) {
+        console.error('CV upload error - API Status:', error.status);
+        console.error('CV upload error - API Detail:', error.detail);
+      }
+      
+      console.error('CV upload error - File info:', {
+        name: file.name,
+        size: file.size,
+        type: file.type
       });
     } finally {
       setIsUploading(false);

@@ -8,7 +8,7 @@ interface ChatMessageProps {
 
 export const ChatMessage = ({ message, generatedFiles }: ChatMessageProps) => {
   // Simple markdown-like formatting for plain text
-  // Converts ## headers, **text** to bold, *text* to italic, and preserves line breaks
+  // Converts ## headers, **text** to bold, *text* to italic, [text](url) to links, and preserves line breaks
   const formatText = (text: string) => {
     // Split by line breaks to preserve structure
     return text.split('\n').map((line, lineIndex) => {
@@ -22,56 +22,128 @@ export const ChatMessage = ({ message, generatedFiles }: ChatMessageProps) => {
         );
       }
       
-      // Simple formatting: **bold** and *italic*
+      // Process formatting: links first, then bold/italic
       const parts: (string | React.ReactElement)[] = [];
       let lastIndex = 0;
       let key = 0;
       
-      // Match **bold** and *italic* patterns
-      const boldRegex = /\*\*([^*]+)\*\*/g;
-      const italicRegex = /(?<!\*)\*([^*]+)\*(?!\*)/g;
-      
-      // Find all matches
-      const matches: Array<{ start: number; end: number; type: 'bold' | 'italic'; text: string }> = [];
+      // Match markdown links: [text](url)
+      const linkRegex = /\[([^\]]+)\]\(([^)]+)\)/g;
+      const matches: Array<{ start: number; end: number; type: 'link' | 'bold' | 'italic'; text: string; url?: string }> = [];
       
       let match;
-      while ((match = boldRegex.exec(line)) !== null) {
-        matches.push({ start: match.index, end: match.index + match[0].length, type: 'bold', text: match[1] });
-      }
-      while ((match = italicRegex.exec(line)) !== null) {
-        // Check if not part of a bold match
-        const isPartOfBold = matches.some(m => match!.index >= m.start && match!.index < m.end);
-        if (!isPartOfBold) {
-          matches.push({ start: match.index, end: match.index + match[0].length, type: 'italic', text: match[1] });
-        }
+      // Find all link matches
+      while ((match = linkRegex.exec(line)) !== null) {
+        matches.push({ 
+          start: match.index, 
+          end: match.index + match[0].length, 
+          type: 'link', 
+          text: match[1], 
+          url: match[2] 
+        });
       }
       
-      // Sort matches by position
+      // Helper function to process bold/italic within a text segment
+      const processBoldItalic = (textSegment: string, baseKey: number): (string | React.ReactElement)[] => {
+        const segmentParts: (string | React.ReactElement)[] = [];
+        let segmentLastIndex = 0;
+        let segmentKey = baseKey;
+        
+        // Match **bold** and *italic* patterns
+        const boldRegex = /\*\*([^*]+)\*\*/g;
+        const italicRegex = /(?<!\*)\*([^*]+)\*(?!\*)/g;
+        
+        const formatMatches: Array<{ start: number; end: number; type: 'bold' | 'italic'; text: string }> = [];
+        
+        let formatMatch;
+        while ((formatMatch = boldRegex.exec(textSegment)) !== null) {
+          formatMatches.push({ 
+            start: formatMatch.index, 
+            end: formatMatch.index + formatMatch[0].length, 
+            type: 'bold', 
+            text: formatMatch[1] 
+          });
+        }
+        while ((formatMatch = italicRegex.exec(textSegment)) !== null) {
+          // Check if not part of a bold match
+          const isPartOfBold = formatMatches.some(m => formatMatch!.index >= m.start && formatMatch!.index < m.end);
+          if (!isPartOfBold) {
+            formatMatches.push({ 
+              start: formatMatch.index, 
+              end: formatMatch.index + formatMatch[0].length, 
+              type: 'italic', 
+              text: formatMatch[1] 
+            });
+          }
+        }
+        
+        // Sort matches by position
+        formatMatches.sort((a, b) => a.start - b.start);
+        
+        // Build segment parts
+        formatMatches.forEach((m) => {
+          // Add text before match
+          if (m.start > segmentLastIndex) {
+            segmentParts.push(textSegment.substring(segmentLastIndex, m.start));
+          }
+          // Add formatted match
+          if (m.type === 'bold') {
+            segmentParts.push(<strong key={`${lineIndex}-format-${segmentKey++}`}>{m.text}</strong>);
+          } else {
+            segmentParts.push(<em key={`${lineIndex}-format-${segmentKey++}`}>{m.text}</em>);
+          }
+          segmentLastIndex = m.end;
+        });
+        
+        // Add remaining text
+        if (segmentLastIndex < textSegment.length) {
+          segmentParts.push(textSegment.substring(segmentLastIndex));
+        }
+        
+        return segmentParts.length > 0 ? segmentParts : [textSegment];
+      };
+      
+      // Sort all matches by position
       matches.sort((a, b) => a.start - b.start);
       
       // Build parts array
       matches.forEach((m) => {
         // Add text before match
         if (m.start > lastIndex) {
-          parts.push(line.substring(lastIndex, m.start));
+          const beforeText = line.substring(lastIndex, m.start);
+          const beforeParts = processBoldItalic(beforeText, key);
+          parts.push(...beforeParts);
+          key += beforeParts.filter(p => typeof p !== 'string').length;
         }
         // Add formatted match
-        if (m.type === 'bold') {
-          parts.push(<strong key={key++}>{m.text}</strong>);
-        } else {
-          parts.push(<em key={key++}>{m.text}</em>);
+        if (m.type === 'link') {
+          const linkText = processBoldItalic(m.text, key);
+          parts.push(
+            <a
+              key={`${lineIndex}-link-${key++}`}
+              href={m.url}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-indigo-600 hover:text-indigo-700 dark:text-indigo-400 dark:hover:text-indigo-300 underline"
+            >
+              {linkText}
+            </a>
+          );
+          key += linkText.filter(p => typeof p !== 'string').length;
         }
         lastIndex = m.end;
       });
       
       // Add remaining text
       if (lastIndex < line.length) {
-        parts.push(line.substring(lastIndex));
+        const remainingText = line.substring(lastIndex);
+        const remainingParts = processBoldItalic(remainingText, key);
+        parts.push(...remainingParts);
       }
       
-      // If no matches, return original line
+      // If no matches, process the whole line for bold/italic
       if (parts.length === 0) {
-        parts.push(line);
+        parts.push(...processBoldItalic(line, key));
       }
       
       return (
