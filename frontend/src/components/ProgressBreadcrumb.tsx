@@ -7,6 +7,7 @@ interface ProgressBreadcrumbProps {
   jobInputValid: boolean;
   analysisStarted: boolean;
   isAnalyzing: boolean;
+  chatReady: boolean;
 }
 
 interface Stage {
@@ -23,6 +24,7 @@ export const ProgressBreadcrumb = ({
   jobInputValid,
   analysisStarted,
   isAnalyzing,
+  chatReady,
 }: ProgressBreadcrumbProps) => {
   // Build stages dynamically - exclude job step if skipped
   const allStages: Stage[] = [
@@ -48,8 +50,8 @@ export const ProgressBreadcrumb = ({
     {
       id: 'chat',
       label: 'Chat Ready',
-      completed: analysisStarted && !isAnalyzing,
-      current: false,
+      completed: chatReady,
+      current: analysisStarted && !isAnalyzing && !chatReady,
     },
   ];
 
