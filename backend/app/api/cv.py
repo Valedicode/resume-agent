@@ -330,4 +330,3 @@ async def validate_cv_data(cv_data: ResumeInfo):
         "cv_data": cv_data.model_dump()
     }
 
-
