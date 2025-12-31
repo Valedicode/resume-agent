@@ -7,9 +7,10 @@ interface StepProps {
   description: string;
   state: StepState;
   showConnector?: boolean;
+  nextStepSkipped?: boolean;
 }
 
-const Step = ({ title, description, state, showConnector = false }: StepProps) => {
+const Step = ({ title, description, state, showConnector = false, nextStepSkipped = false }: StepProps) => {
   const indicator = (() => {
     if (state === 'done') {
       return (
@@ -65,7 +66,8 @@ const Step = ({ title, description, state, showConnector = false }: StepProps) =
       ? 'text-slate-600 dark:text-slate-300'
       : 'text-slate-500 dark:text-slate-400';
 
-  const connectorVisible = state === 'done' || state === 'skipped';
+  // Show connector if this step is done/skipped, OR if the next step is skipped (to show connection)
+  const connectorVisible = state === 'done' || state === 'skipped' || nextStepSkipped;
   const connectorColor = connectorVisible
     ? 'bg-green-500 dark:bg-green-400'
     : 'bg-slate-300 dark:bg-slate-600';
@@ -75,7 +77,7 @@ const Step = ({ title, description, state, showConnector = false }: StepProps) =
       <div className="flex items-start gap-4">
         <div className="relative flex-shrink-0">
           {indicator}
-          {/* Connecting Line - appears only after THIS step is finished */}
+          {/* Connecting Line - appears after THIS step is finished or when next step is skipped */}
           {showConnector && (
             <div
               className={`absolute left-1/2 top-10 h-6 w-0.5 -translate-x-1/2 origin-top transform transition-all duration-500 ${connectorColor} ${connectorVisible ? 'scale-y-100 opacity-100' : 'scale-y-0 opacity-0'}`}
@@ -147,22 +149,27 @@ export const AnalysisLoadingScreen = ({
               description="Parsing your PDF and structuring your profile."
               state={resumeState}
               showConnector={true}
+              nextStepSkipped={jobState === 'skipped'}
             />
-            <Step
-              title="Job description"
-              description={
-                jobState === 'active'
-                  ? 'Extracting requirements and keywords to match your resume.'
-                  : jobState === 'skipped'
-                    ? 'Skipped — we’ll focus on general improvements.'
+            {jobState !== 'skipped' && (
+              <Step
+                title="Job description"
+                description={
+                  jobState === 'active'
+                    ? 'Extracting requirements and keywords to match your resume.'
                     : 'Using job requirements to tailor your documents (optional).'
-              }
-              state={jobState}
-              showConnector={true}
-            />
+                }
+                state={jobState}
+                showConnector={true}
+              />
+            )}
             <Step
               title="Prepare chat"
-              description="Loading your personalized assistant and tools."
+              description={
+                preparingState === 'active'
+                  ? 'Initializing your AI assistant and generating your resume summary.'
+                  : 'Loading your personalized assistant and tools.'
+              }
               state={preparingState}
               showConnector={false}
             />

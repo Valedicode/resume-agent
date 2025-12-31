@@ -613,6 +613,247 @@ def generate_cover_letter_pdf(content_json: str, output_filename: str, applicant
     except Exception as e:
         return f"Error generating cover letter PDF: {str(e)}"
 
+@tool
+def generate_cv_docx(cv_json: str, output_filename: str, applicant_name: str) -> str:
+    """
+    Generate a Word document (.docx) with CV content in basic structure.
+    
+    WARNING: Only call this tool after the user has explicitly approved the CV content!
+    
+    This creates a simple Word document with structured content. The formatting is minimal
+    so users can easily customize it in Microsoft Word or Google Docs to match their preferences.
+    
+    Args:
+        cv_json: ResumeInfo JSON string from cv_agent (the original CV data)
+        output_filename: Filename for the Word document (e.g., "kevin_ha_cv_tailored.docx")
+        applicant_name: Full name for document title
+    
+    Returns:
+        Success message with the filename for download
+    
+    Example:
+        >>> result = generate_cv_docx(cv_data, "john_doe_cv.docx", "John Doe")
+        >>> print(result)
+    """
+    try:
+        from docx import Document
+        from docx.shared import Pt
+        
+        # Parse CV data
+        cv_data = json.loads(cv_json)
+        
+        # Ensure output directory exists
+        output_dir = DEFAULT_OUTPUT_DIR
+        output_dir.mkdir(parents=True, exist_ok=True)
+        
+        # Construct full output path
+        output_path = output_dir / output_filename
+        
+        # Create document
+        doc = Document()
+        
+        # Title (Name) - Level 1 heading
+        title = doc.add_heading(cv_data.get('name', applicant_name), level=1)
+        
+        # Contact information
+        contact_parts = []
+        if cv_data.get('email'):
+            contact_parts.append(cv_data['email'])
+        if cv_data.get('phone'):
+            contact_parts.append(cv_data['phone'])
+        if cv_data.get('location'):
+            contact_parts.append(cv_data['location'])
+        if cv_data.get('linkedin_url'):
+            contact_parts.append(f"LinkedIn: {cv_data['linkedin_url']}")
+        if cv_data.get('github_url'):
+            contact_parts.append(f"GitHub: {cv_data['github_url']}")
+        if cv_data.get('portfolio_url'):
+            contact_parts.append(f"Portfolio: {cv_data['portfolio_url']}")
+        
+        if contact_parts:
+            contact_para = doc.add_paragraph(' | '.join(contact_parts))
+            contact_para.style.font.size = Pt(10)
+        
+        # Education section
+        if cv_data.get('education'):
+            doc.add_heading('Education', level=2)
+            for edu in cv_data['education']:
+                edu_para = doc.add_paragraph()
+                if edu.get('degree'):
+                    edu_para.add_run(edu['degree']).bold = True
+                if edu.get('institution'):
+                    if edu.get('degree'):
+                        edu_para.add_run(f" - {edu['institution']}")
+                    else:
+                        edu_para.add_run(edu['institution']).bold = True
+                if edu.get('dates'):
+                    edu_para.add_run(f" ({edu['dates']})")
+                if edu.get('location'):
+                    edu_para.add_run(f", {edu['location']}")
+                if edu.get('gpa'):
+                    edu_para.add_run(f" - GPA: {edu['gpa']}")
+        
+        # Experience section
+        if cv_data.get('experience'):
+            doc.add_heading('Experience', level=2)
+            for exp in cv_data['experience']:
+                # Position and company
+                exp_para = doc.add_paragraph()
+                if exp.get('position'):
+                    exp_para.add_run(exp['position']).bold = True
+                if exp.get('company'):
+                    if exp.get('position'):
+                        exp_para.add_run(f" at {exp['company']}")
+                    else:
+                        exp_para.add_run(exp['company']).bold = True
+                if exp.get('dates'):
+                    exp_para.add_run(f" ({exp['dates']})")
+                if exp.get('location'):
+                    exp_para.add_run(f" - {exp['location']}")
+                
+                # Responsibilities/bullet points
+                if exp.get('responsibilities'):
+                    for resp in exp['responsibilities']:
+                        doc.add_paragraph(resp, style='List Bullet')
+        
+        # Skills section
+        if cv_data.get('skills'):
+            doc.add_heading('Skills', level=2)
+            skills_text = ', '.join(cv_data['skills'])
+            doc.add_paragraph(skills_text)
+        
+        # Projects section
+        if cv_data.get('projects'):
+            doc.add_heading('Projects', level=2)
+            for project in cv_data['projects']:
+                proj_para = doc.add_paragraph()
+                if project.get('name'):
+                    proj_para.add_run(project['name']).bold = True
+                if project.get('description'):
+                    if project.get('name'):
+                        proj_para.add_run(f": {project['description']}")
+                    else:
+                        proj_para.add_run(project['description'])
+                if project.get('technologies'):
+                    tech_text = ', '.join(project['technologies']) if isinstance(project['technologies'], list) else project['technologies']
+                    doc.add_paragraph(f"Technologies: {tech_text}", style='List Bullet')
+        
+        # Leadership & Activities section
+        if cv_data.get('leadership_activities'):
+            doc.add_heading('Leadership & Activities', level=2)
+            for activity in cv_data['leadership_activities']:
+                act_para = doc.add_paragraph()
+                if activity.get('role'):
+                    act_para.add_run(activity['role']).bold = True
+                if activity.get('organization'):
+                    if activity.get('role'):
+                        act_para.add_run(f" - {activity['organization']}")
+                    else:
+                        act_para.add_run(activity['organization']).bold = True
+                if activity.get('dates'):
+                    act_para.add_run(f" ({activity['dates']})")
+                if activity.get('description'):
+                    doc.add_paragraph(activity['description'], style='List Bullet')
+        
+        # Save document
+        doc.save(str(output_path))
+        
+        return f"CV Word document generated successfully! The file '{output_filename}' is ready for download. You can customize the formatting in Microsoft Word or Google Docs."
+        
+    except ImportError:
+        return "Error: python-docx library is not installed. Please install it to generate Word documents."
+    except json.JSONDecodeError as e:
+        return f"Error: Invalid CV JSON data: {str(e)}"
+    except Exception as e:
+        return f"Error generating CV Word document: {str(e)}"
+
+@tool
+def generate_cover_letter_docx(content_json: str, output_filename: str, applicant_name: str, applicant_contact: str, recipient_info: str = "Hiring Manager") -> str:
+    """
+    Generate a Word document (.docx) with cover letter content in basic structure.
+    
+    WARNING: Only call this tool after the user has explicitly approved the cover letter content!
+    
+    This creates a simple Word document with structured cover letter content. The formatting is minimal
+    so users can easily customize it in Microsoft Word or Google Docs.
+    
+    Args:
+        content_json: CoverLetterContent JSON from generate_cover_letter_content (the JSON string output)
+        output_filename: Filename for the Word document (e.g., "john_doe_cover_letter.docx")
+        applicant_name: Full name from CV data
+        applicant_contact: Contact info formatted as "email | phone"
+        recipient_info: Who to address (default: "Hiring Manager")
+    
+    Returns:
+        Success message with the filename for download
+    
+    Example:
+        >>> result = generate_cover_letter_docx(
+        ...     content_json=cover_letter_json_output,
+        ...     output_filename="john_doe_cover_letter.docx",
+        ...     applicant_name="John Doe",
+        ...     applicant_contact="john@email.com | (123) 456-7890)",
+        ...     recipient_info="Hiring Manager"
+        ... )
+    """
+    try:
+        from docx import Document
+        from docx.shared import Pt
+        from datetime import datetime
+        
+        # Parse cover letter content
+        content_data = json.loads(content_json)
+        
+        # Ensure output directory exists
+        output_dir = DEFAULT_OUTPUT_DIR
+        output_dir.mkdir(parents=True, exist_ok=True)
+        
+        # Construct full output path
+        output_path = output_dir / output_filename
+        
+        # Create document
+        doc = Document()
+        
+        # Header with name and contact
+        header_para = doc.add_paragraph()
+        header_para.add_run(applicant_name).bold = True
+        header_para.add_run(f"\n{applicant_contact}")
+        
+        # Date
+        from docx.enum.text import WD_ALIGN_PARAGRAPH
+        current_date = datetime.now().strftime("%B %d, %Y")
+        date_para = doc.add_paragraph(current_date)
+        date_para.alignment = WD_ALIGN_PARAGRAPH.RIGHT
+        
+        # Greeting
+        greeting_para = doc.add_paragraph()
+        greeting_para.add_run(f"Dear {recipient_info},")
+        
+        # Body paragraphs
+        if content_data.get('paragraphs'):
+            for para_text in content_data['paragraphs']:
+                doc.add_paragraph(para_text)
+        
+        # Closing
+        closing_para = doc.add_paragraph("Sincerely,")
+        closing_para.space_after = Pt(12)
+        
+        # Signature
+        signature_para = doc.add_paragraph(applicant_name)
+        signature_para.space_before = Pt(24)
+        
+        # Save document
+        doc.save(str(output_path))
+        
+        return f"Cover letter Word document generated successfully! The file '{output_filename}' is ready for download. You can customize the formatting in Microsoft Word or Google Docs."
+        
+    except ImportError:
+        return "Error: python-docx library is not installed. Please install it to generate Word documents."
+    except json.JSONDecodeError as e:
+        return f"Error: Invalid cover letter JSON data: {str(e)}"
+    except Exception as e:
+        return f"Error generating cover letter Word document: {str(e)}"
+
 # ============================================
 # Agent Configuration
 # ============================================
@@ -652,25 +893,39 @@ YOUR WORKFLOW (FOLLOW THIS SEQUENCE):
      * "emphasize X more" → note the adjustment
      * "don't mention Y" → note the constraint
      * "redo the analysis" → call the tool again with updated context
+   - After refining or discussing each section (Education, Experience, Skills, Projects, etc.), ask if they want to generate the document for that section
+   - You can refine multiple sections before generating, but always offer generation after showing each refined section
 
 3. CV GENERATION PHASE:
    - After approval, call generate_tailored_cv_html
    - SHOW a preview/summary of the generated HTML to the user
-   - Ask: "Ready to generate the PDF?"
-   - ONLY call generate_cv_pdf after EXPLICIT approval
-   - Use appropriate filename (e.g., "firstname_lastname_cv_tailored.pdf")
+   - After showing each section or the complete CV, ALWAYS ask: "Ready to generate the document? I can create a PDF, Word document (.docx), or both formats. Which would you prefer?"
+   - If user requests "both", "pdf and word", "both formats", or similar, generate BOTH formats
+   - If user requests "pdf" or "PDF", generate only PDF
+   - If user requests "word", "docx", or "Word", generate only Word document
+   - If user doesn't specify, ask for clarification
+   - ONLY call generate_cv_pdf and/or generate_cv_docx after EXPLICIT approval
+   - Use appropriate filename (e.g., "firstname_lastname_cv_tailored.pdf" or ".docx")
+   - When generating both formats, call BOTH tools and include BOTH success messages in your response
+   - Note: Word documents have minimal formatting so users can easily customize them
 
 4. COVER LETTER PHASE (if requested):
    - Call generate_cover_letter_content with CV, job, and company data
    - SHOW the cover letter content to the user
    - Ask for feedback or approval
-   - ONLY call generate_cover_letter_pdf after EXPLICIT approval
-   - When calling generate_cover_letter_pdf, you MUST provide:
+   - After showing the cover letter, ALWAYS ask: "Ready to generate the document? I can create a PDF, Word document (.docx), or both formats. Which would you prefer?"
+   - If user requests "both", "pdf and word", "both formats", or similar, generate BOTH formats
+   - If user requests "pdf" or "PDF", generate only PDF
+   - If user requests "word", "docx", or "Word", generate only Word document
+   - If user doesn't specify, ask for clarification
+   - ONLY call generate_cover_letter_pdf and/or generate_cover_letter_docx after EXPLICIT approval
+   - When calling generate_cover_letter_pdf or generate_cover_letter_docx, you MUST provide:
      * content_json: The output from generate_cover_letter_content
-     * output_filename: e.g., "firstname_lastname_cover_letter.pdf"
+     * output_filename: e.g., "firstname_lastname_cover_letter.pdf" or ".docx"
      * applicant_name: Extract from CV data (e.g., cv_data['name'])
      * applicant_contact: Format as "email | phone" from CV data (e.g., "john@email.com | (123) 456-7890")
      * recipient_info: Extract from job data or use "Hiring Manager"
+   - When generating both formats, call BOTH tools and include BOTH success messages in your response
 
 CRITICAL PRINCIPLES:
 ALWAYS show changes before generating PDFs
@@ -697,18 +952,24 @@ INTERACTION STYLE:
 - Format responses with simple line breaks and plain text structure
 
 **CRITICAL - File Downloads:**
-- When you call generate_cv_pdf or generate_cover_letter_pdf tools, they return a success message
+- When you call generate_cv_pdf, generate_cv_docx, generate_cover_letter_pdf, or generate_cover_letter_docx tools, they return a success message
 - You MUST include this EXACT success message in your response to the user
 - DO NOT paraphrase or reword the tool's success message - copy it verbatim
 - The success message contains the filename which is needed for the download system to work
 - DO NOT create markdown links like [Download](sandbox:/filename.pdf) or [Download](file://filename.pdf)
 - DO NOT create any file://, sandbox:/, or other file links - they don't work
-- The user interface will AUTOMATICALLY display a download button when it detects the tool's success message
-- You can add additional text before or after the tool message, but the tool's exact message MUST be included
+- The user interface will AUTOMATICALLY display download buttons when it detects the tool's success messages
+- If you generate BOTH formats (PDF and Word), include BOTH success messages and the UI will show TWO download buttons
+- You can add additional text before or after the tool messages, but each tool's exact message MUST be included
+- For Word documents, mention that formatting is minimal so users can customize it easily
 
-Example:
-- Tool returns: "CV PDF generated successfully! The file 'john_doe_cv.pdf' is ready for download."
-- Your response should include this EXACT text, like: "Great! CV PDF generated successfully! The file 'john_doe_cv.pdf' is ready for download. If you need anything else, let me know!"
+Examples:
+- Single format: Tool returns "CV PDF generated successfully! The file 'john_doe_cv.pdf' is ready for download."
+  Your response: "Great! CV PDF generated successfully! The file 'john_doe_cv.pdf' is ready for download."
+- Both formats: 
+  Tool 1 returns: "CV PDF generated successfully! The file 'john_doe_cv.pdf' is ready for download."
+  Tool 2 returns: "CV Word document generated successfully! The file 'john_doe_cv.docx' is ready for download."
+  Your response MUST include BOTH messages: "Perfect! I've generated both formats for you. CV PDF generated successfully! The file 'john_doe_cv.pdf' is ready for download. CV Word document generated successfully! The file 'john_doe_cv.docx' is ready for download. You can customize the Word document formatting in Microsoft Word or Google Docs."
 
 Remember: You are an assistant helping the user create their best application materials. 
 The user is the expert on their own experience - you're the expert on presentation."""
@@ -725,7 +986,9 @@ agent = create_agent(
         generate_tailored_cv_html,
         generate_cover_letter_content,
         generate_cv_pdf,
-        generate_cover_letter_pdf
+        generate_cover_letter_pdf,
+        generate_cv_docx,
+        generate_cover_letter_docx
     ],
     system_prompt=system_prompt
 )

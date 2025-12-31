@@ -38,6 +38,9 @@ httpx>=0.25.0
 # PDF generation (for writer agent)
 weasyprint>=67.0
 
+# Word document generation (for writer agent)
+python-docx>=1.1.0
+
 # Optional: LangSmith tracing (for debugging)
 # langsmith>=0.1.0
 

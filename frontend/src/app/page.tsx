@@ -71,6 +71,7 @@ export default function Home() {
     isInitializing,
     sessionError,
     messages,
+    fadingOutMessageId,
     inputText,
     setInputText,
     isLoading,
@@ -110,9 +111,16 @@ export default function Home() {
     }
   };
 
-  // Initialize Writer chat when CV and optional job data are ready
+  // Determine if analysis can be started
+  // Can start if resume is uploaded and either job is skipped or valid job input is provided
+  const canStartAnalysis = !!uploadedFile && !isUploading && (jobSkipped || isValidJobInput);
+  
+  // Determine if both uploads are complete and analysis is done
+  const inputsReady = !!cvData && (jobSkipped || !!jobData);
+  
+  // Initialize Writer chat when CV and optional job data are ready (during "Prepare chat" phase)
   useEffect(() => {
-    if (!analysisStarted || !cvData || sessionId) return;
+    if (!analysisStarted || !cvData || sessionId || isInitializing) return;
     
     // Only initialize if we have CV data and (job is skipped or job data is ready)
     const readyToChat = cvData && (jobSkipped || jobData);
@@ -120,19 +128,9 @@ export default function Home() {
     if (readyToChat) {
       initializeSession();
     }
-  }, [analysisStarted, cvData, jobData, jobSkipped, sessionId, initializeSession]);
+  }, [analysisStarted, cvData, jobData, jobSkipped, sessionId, isInitializing, initializeSession]);
 
-  // Determine if analysis can be started
-  // Can start if resume is uploaded and either job is skipped or valid job input is provided
-  const canStartAnalysis = !!uploadedFile && !isUploading && (jobSkipped || isValidJobInput);
-  
-  // Determine if both uploads are complete and analysis is done
-  const inputsReady = !!cvData && (jobSkipped || !!jobData);
-  const bothUploadsComplete = analysisStarted && chatReady && inputsReady;
-  const isAnalyzing = isUploading || isJobProcessing;
-  const hasJobInput = isValidJobInput;
-
-  // Small "preparing" phase for smoother UX
+  // Mark chat as ready when session initialization completes
   useEffect(() => {
     if (!analysisStarted) {
       setChatReady(false);
@@ -144,9 +142,17 @@ export default function Home() {
       return;
     }
 
-    const t = setTimeout(() => setChatReady(true), 650);
-    return () => clearTimeout(t);
-  }, [analysisStarted, inputsReady]);
+    // Chat is ready when session is initialized (not initializing and has sessionId)
+    if (sessionId && !isInitializing) {
+      setChatReady(true);
+    } else {
+      setChatReady(false);
+    }
+  }, [analysisStarted, inputsReady, sessionId, isInitializing]);
+
+  const bothUploadsComplete = analysisStarted && chatReady && inputsReady;
+  const isAnalyzing = isUploading || isJobProcessing;
+  const hasJobInput = isValidJobInput;
 
   return (
     <div className="flex min-h-screen flex-col bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50 dark:from-slate-950 dark:via-slate-900 dark:to-slate-950">
@@ -204,6 +210,7 @@ export default function Home() {
             jobInputValid={isValidJobInput}
             analysisStarted={analysisStarted}
             isAnalyzing={isAnalyzing}
+            chatReady={chatReady}
           />
         </div>
 
@@ -258,7 +265,9 @@ export default function Home() {
                         : 'pending'
                 }
                 preparingState={
-                  cvData && inputsReady ? (chatReady ? 'done' : 'active') : 'pending'
+                  cvData && inputsReady 
+                    ? (sessionId && !isInitializing ? 'done' : 'active')
+                    : 'pending'
                 }
               />
             </div>
@@ -266,6 +275,7 @@ export default function Home() {
             <div className="flex flex-1 animate-fade-in">
               <ChatContainer
                 messages={messages}
+                fadingOutMessageId={fadingOutMessageId}
                 inputText={inputText}
                 isLoading={isLoading}
                 textareaRef={textareaRef}
